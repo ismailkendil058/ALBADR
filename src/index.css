@@ -1,0 +1,325 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand Colors - Traditional Spice Theme */
+    --background: 36 33% 97%;
+    --foreground: 24 30% 15%;
+
+    --card: 36 30% 95%;
+    --card-foreground: 24 30% 15%;
+
+    --popover: 36 33% 97%;
+    --popover-foreground: 24 30% 15%;
+
+    /* Deep Red - Primary CTA */
+    --primary: 0 65% 38%;
+    --primary-foreground: 36 33% 97%;
+
+    /* Dark Brown - Headers, Footer */
+    --secondary: 24 35% 20%;
+    --secondary-foreground: 36 30% 95%;
+
+    /* Muted Beige/Sand */
+    --muted: 36 25% 90%;
+    --muted-foreground: 24 20% 40%;
+
+    /* Accent Sand Tones */
+    --accent: 32 30% 85%;
+    --accent-foreground: 24 30% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 36 33% 97%;
+
+    --border: 32 20% 82%;
+    --input: 32 20% 85%;
+    --ring: 0 65% 38%;
+
+    --radius: 0.5rem;
+
+    /* Chart Colors - Executive palette */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Custom tokens */
+    --cream: 36 33% 97%;
+    --ivory: 40 30% 94%;
+    --sand: 32 25% 88%;
+    --deep-red: 0 65% 38%;
+    --deep-red-hover: 0 65% 32%;
+    --dark-brown: 24 35% 20%;
+    --warm-brown: 24 30% 30%;
+    --gold-accent: 38 70% 50%;
+
+    /* Sidebar */
+    --sidebar-background: 24 35% 20%;
+    --sidebar-foreground: 36 30% 95%;
+    --sidebar-primary: 0 65% 38%;
+    --sidebar-primary-foreground: 36 33% 97%;
+    --sidebar-accent: 24 30% 28%;
+    --sidebar-accent-foreground: 36 30% 95%;
+    --sidebar-border: 24 30% 30%;
+    --sidebar-ring: 0 65% 38%;
+  }
+
+  .dark {
+    --background: 24 30% 10%;
+    --foreground: 36 30% 95%;
+
+    --card: 24 30% 12%;
+    --card-foreground: 36 30% 95%;
+
+    --popover: 24 30% 12%;
+    --popover-foreground: 36 30% 95%;
+
+    --primary: 0 65% 45%;
+    --primary-foreground: 36 33% 97%;
+
+    --secondary: 24 25% 18%;
+    --secondary-foreground: 36 30% 95%;
+
+    --muted: 24 20% 18%;
+    --muted-foreground: 36 20% 65%;
+
+    --accent: 32 20% 22%;
+    --accent-foreground: 36 30% 95%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 36 33% 97%;
+
+    --border: 24 20% 25%;
+    --input: 24 20% 25%;
+    --ring: 0 65% 45%;
+
+    --sidebar-background: 24 30% 8%;
+    --sidebar-foreground: 36 30% 95%;
+    --sidebar-primary: 0 65% 45%;
+    --sidebar-primary-foreground: 36 33% 97%;
+    --sidebar-accent: 24 25% 15%;
+    --sidebar-accent-foreground: 36 30% 95%;
+    --sidebar-border: 24 20% 20%;
+    --sidebar-ring: 0 65% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    direction: rtl;
+  }
+
+  /* Arabic Typography */
+  .font-arabic {
+    font-family: 'Noto Naskh Arabic', 'Amiri', serif;
+  }
+
+  .font-arabic-display {
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+  }
+
+  /* French Typography */
+  .font-french {
+    font-family: 'Lora', serif;
+  }
+
+  .font-body {
+    font-family: 'Source Sans 3', 'Noto Naskh Arabic', sans-serif;
+  }
+}
+
+@layer components {
+  /* Premium Card Styling */
+  .card-premium {
+    @apply bg-card rounded-lg border border-border shadow-sm transition-all duration-300;
+  }
+
+  .card-premium:hover {
+    @apply shadow-md border-primary/20;
+    transform: translateY(-2px);
+  }
+
+  /* Category Card */
+  .category-card {
+    @apply relative overflow-hidden rounded-lg transition-all duration-300;
+  }
+
+  .category-card::after {
+    content: '';
+    @apply absolute inset-0 bg-secondary/40 transition-opacity duration-300;
+  }
+
+  .category-card:hover::after {
+    @apply bg-secondary/60;
+  }
+
+  /* Product Card */
+  .product-card {
+    @apply bg-card rounded-lg border border-border overflow-hidden transition-all duration-300;
+  }
+
+  .product-card:hover {
+    @apply shadow-lg border-primary/30;
+    transform: translateY(-4px);
+  }
+
+  /* Button Variants */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors duration-200;
+  }
+
+  /* Badge Styles */
+  .badge-promo {
+    @apply bg-primary text-primary-foreground px-3 py-1 text-sm font-medium rounded-full;
+  }
+
+  .badge-new {
+    @apply bg-gold-accent text-secondary px-3 py-1 text-sm font-medium rounded-full;
+  }
+
+  /* Section Headers */
+  .section-header {
+    @apply text-center mb-10;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-arabic-display font-bold text-secondary mb-2;
+  }
+
+  .section-subtitle {
+    @apply text-muted-foreground font-french text-lg;
+  }
+
+  /* Mega Menu */
+  .mega-menu {
+    @apply absolute top-full right-0 bg-card border border-border rounded-lg shadow-xl opacity-0 invisible transition-all duration-300 z-50;
+  }
+
+  .mega-menu.active {
+    @apply opacity-100 visible;
+  }
+
+  /* Cart Badge */
+  .cart-badge {
+    @apply absolute -top-2 -left-2 bg-primary text-primary-foreground text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold;
+  }
+
+  /* Quick View Overlay */
+  .quick-view-overlay {
+    @apply absolute inset-0 bg-secondary/80 opacity-0 transition-opacity duration-300 flex items-center justify-center;
+  }
+
+  .product-card:hover .quick-view-overlay {
+    @apply opacity-100;
+  }
+
+  /* Wishlist Button */
+  .wishlist-btn {
+    @apply w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center transition-all duration-200;
+  }
+
+  .wishlist-btn:hover {
+    @apply bg-primary text-primary-foreground border-primary;
+  }
+
+  .wishlist-btn.active {
+    @apply bg-primary text-primary-foreground border-primary;
+  }
+}
+
+@layer utilities {
+  /* Gold Accent Color */
+  .bg-gold-accent {
+    background-color: hsl(var(--gold-accent));
+  }
+
+  .text-gold-accent {
+    color: hsl(var(--gold-accent));
+  }
+
+  /* Warm Background Variants */
+  .bg-cream {
+    background-color: hsl(var(--cream));
+  }
+
+  .bg-ivory {
+    background-color: hsl(var(--ivory));
+  }
+
+  .bg-sand {
+    background-color: hsl(var(--sand));
+  }
+
+  /* Deep Red */
+  .bg-deep-red {
+    background-color: hsl(var(--deep-red));
+  }
+
+  .text-deep-red {
+    color: hsl(var(--deep-red));
+  }
+
+  .border-deep-red {
+    border-color: hsl(var(--deep-red));
+  }
+
+  /* Dark Brown */
+  .bg-dark-brown {
+    background-color: hsl(var(--dark-brown));
+  }
+
+  .text-dark-brown {
+    color: hsl(var(--dark-brown));
+  }
+
+  /* RTL Support */
+  .rtl {
+    direction: rtl;
+  }
+
+  .ltr {
+    direction: ltr;
+  }
+
+  /* Smooth Image Loading */
+  .img-loading {
+    @apply bg-muted animate-pulse;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+  }
+
+  /* Text Balance for Arabic */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
