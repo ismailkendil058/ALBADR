@@ -94,12 +94,27 @@ const Header = () => {
                   {loading ? (
                     <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
                   ) : (
-                    categories.map((category) => (
-                      <Link key={category.id} to={`/category/${category.id}`}>
-                                                  <span>{category.nameAr}</span>
-                                                  {category.productCount > 0 && (
-                                                    <span className="text-muted-foreground text-sm">({category.productCount})</span>
-                                                  )}                      </Link>
+                    categories.map((category, index) => (
+                      <Link 
+                        key={category.id} 
+                        to={`/category/${category.id}`}
+                        className="flex items-center justify-between px-4 py-3 font-body hover:bg-muted transition-colors"
+                      >
+                        <span>
+                          {index === 0 ? (
+                            <>الزهور والنباتات العطرية <span className="text-xs text-muted-foreground">- Fleurs et Plantes Aromatiques</span></>
+                          ) : index === 1 ? (
+                            <>الأعشاب والنباتات الطبية <span className="text-xs text-muted-foreground">- Herbes et Plantes Médicinales</span></>
+                          ) : index === 2 ? (
+                            <>البذور والحبوب <span className="text-xs text-muted-foreground">- Graines et Céréales</span></>
+                          ) : index === 3 ? (
+                            <>النباتات المجففة والمشروبات العشبية <span className="text-xs text-muted-foreground">- Plantes Séchées</span></>
+                          ) : (category.name || category.nameAr)}
+                        </span>
+                        {category.productCount > 0 && (
+                          <span className="text-muted-foreground text-sm">({category.productCount})</span>
+                        )}
+                      </Link>
                     ))
                   )}
                 </div>
@@ -121,19 +136,29 @@ const Header = () => {
               {loading ? (
                 <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
               ) : (
-                categories.map((category) => (
-                  <Link key={category.id} to={`/category/${category.id}`} className={`block px-4 py-3 font-body text-foreground hover:bg-muted rounded-lg transition-colors ${category.isSpecial ? 'border-r-4 border-primary bg-primary/5' : ''}`} onClick={() => setIsMenuOpen(false)}>
-                    <span>{category.nameAr}</span>
+                categories.map((category, index) => (
+                  <Link key={category.id} to={`/category/${category.id}`} className={`flex items-center justify-between px-4 py-3 font-body hover:bg-muted rounded-lg transition-colors ${category.isSpecial ? 'border-r-4 border-primary bg-primary/5' : ''}`} onClick={() => setIsMenuOpen(false)}>
+                    <span>
+                      {index === 0 ? (
+                        <>الزهور والنباتات العطرية <span className="text-xs text-muted-foreground">- Fleurs et Plantes Aromatiques</span></>
+                      ) : index === 1 ? (
+                        <>الأعشاب والنباتات الطبية <span className="text-xs text-muted-foreground">- Herbes et Plantes Médicinales</span></>
+                      ) : index === 2 ? (
+                        <>البذور والحبوب <span className="text-xs text-muted-foreground">- Graines et Céréales</span></>
+                      ) : index === 3 ? (
+                        <>النباتات المجففة والمشروبات العشبية <span className="text-xs text-muted-foreground">- Plantes Séchées</span></>
+                      ) : (category.name || category.nameAr)}
+                    </span>
                     {category.productCount > 0 && (
-                      <span className="text-muted-foreground text-sm mr-2">({category.productCount})</span>
+                      <span className="text-muted-foreground text-sm">({category.productCount})</span>
                     )}
                   </Link>
                 ))
               )}
               <hr className="border-border my-3" />
-              <Link to="/" className="block px-4 py-3 font-body text-foreground hover:bg-muted rounded-lg" onClick={() => setIsMenuOpen(false)}>الرئيسية</Link>
-              <Link to="/about" className="block px-4 py-3 font-body text-foreground hover:bg-muted rounded-lg" onClick={() => setIsMenuOpen(false)}>من نحن</Link>
-              <Link to="/contact" className="block px-4 py-3 font-body text-foreground hover:bg-muted rounded-lg" onClick={() => setIsMenuOpen(false)}>اتصل بنا</Link>
+              <Link to="/" className="block px-4 py-3 font-body hover:bg-muted rounded-lg" onClick={() => setIsMenuOpen(false)}>الرئيسية</Link>
+              <Link to="/about" className="block px-4 py-3 font-body hover:bg-muted rounded-lg" onClick={() => setIsMenuOpen(false)}>من نحن</Link>
+              <Link to="/contact" className="block px-4 py-3 font-body hover:bg-muted rounded-lg" onClick={() => setIsMenuOpen(false)}>اتصل بنا</Link>
             </div>
           </div>
         </div>

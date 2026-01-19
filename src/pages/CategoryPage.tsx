@@ -28,7 +28,7 @@ const CategoryPage = () => {
   const { data: productsData, isLoading: isLoadingProducts, error: errorProducts } = useProductsByCategory({ categoryId, page, pageSize: PAGE_SIZE });
   
   const { data: products = [], count = 0 } = productsData || {};
-  const category = categories.find(c => c.id === categoryId);
+  const category = categories?.find(c => c.id === categoryId);
 
   const isLoading = isLoadingCategories || isLoadingProducts;
   const error = errorCategories || errorProducts;
