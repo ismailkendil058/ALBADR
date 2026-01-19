@@ -6,6 +6,111 @@ import { Save, Search, Store, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTariffs, useBulkUpdateTariffs, Tariff } from '@/hooks/useTariffs';
 
+import { UseMutationResult } from '@tanstack/react-query'; // Import UseMutationResult
+
+interface TariffTableProps {
+  tariffs: Tariff[];
+  search: string;
+  setSearch: (s: string) => void;
+  store: 'laghouat' | 'aflou';
+  storeName: string;
+  storeColor: string;
+  saveTariffs: (store: 'laghouat' | 'aflou') => Promise<void>;
+  bulkUpdate: UseMutationResult<any, Error, { id: string; home_price: number; bureau_price: number; }[], unknown>;
+  getLocalValue: (tariff: Tariff, field: 'home_price' | 'bureau_price') => string;
+  updateLocalPrice: (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price', value: string) => void;
+}
+
+const TariffTable: React.FC<TariffTableProps> = ({
+  tariffs,
+  search,
+  setSearch,
+  store,
+  storeName,
+  storeColor,
+  saveTariffs,
+  bulkUpdate,
+  getLocalValue,
+  updateLocalPrice
+}) => (
+  <Card>
+    <CardHeader className="pb-4">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 ${storeColor} rounded-full flex items-center justify-center`}>
+            <Store className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">{storeName} Tariffs</CardTitle>
+            <p className="text-sm text-muted-foreground">{tariffs.length} wilayas</p>
+          </div>
+        </div>
+        <Button onClick={() => saveTariffs(store)} disabled={bulkUpdate.isPending}>
+          {bulkUpdate.isPending ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4 mr-2" />
+          )}
+          Save Tariffs
+        </Button>
+      </div>
+      <div className="relative mt-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search wilaya..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+    </CardHeader>
+    <CardContent>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="text-left py-3 px-4 font-medium">Wilaya</th>
+              <th className="text-center py-3 px-4 font-medium">Home Delivery (DZD)</th>
+              <th className="text-center py-3 px-4 font-medium">Bureau Delivery (DZD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tariffs.map((tariff, index) => (
+              <tr key={tariff.id} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
+                <td className="py-2 px-4 font-medium" dir="rtl">
+                  {tariff.wilaya_code} - {tariff.wilaya_name}
+                </td>
+                <td className="py-2 px-4">
+                  <Input
+                    type="text"
+                    pattern="[0-9]*"
+                    value={getLocalValue(tariff, 'home_price')}
+                    onChange={(e) => {
+                      updateLocalPrice(tariff.id, tariff, 'home_price', e.target.value);
+                    }}
+                    className="w-24 mx-auto text-center"
+                  />
+                </td>
+                <td className="py-2 px-4">
+                  <Input
+                    type="text"
+                    pattern="[0-9]*"
+                    value={getLocalValue(tariff, 'bureau_price')}
+                    onChange={(e) => {
+                      updateLocalPrice(tariff.id, tariff, 'bureau_price', e.target.value);
+                    }}
+                    className="w-24 mx-auto text-center"
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 const AdminTarifs: React.FC = () => {
   const { data: allTariffs = [], isLoading } = useTariffs();
   const bulkUpdate = useBulkUpdateTariffs();
@@ -99,98 +204,7 @@ const AdminTarifs: React.FC = () => {
     );
   }
 
-  const TariffTable = ({ 
-    tariffs, 
-    search, 
-    setSearch, 
-    store,
-    storeName,
-    storeColor
-  }: {
-    tariffs: Tariff[];
-    search: string;
-    setSearch: (s: string) => void;
-    store: 'laghouat' | 'aflou';
-    storeName: string;
-    storeColor: string;
-  }) => (
-    <Card>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 ${storeColor} rounded-full flex items-center justify-center`}>
-              <Store className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">{storeName} Tariffs</CardTitle>
-              <p className="text-sm text-muted-foreground">{tariffs.length} wilayas</p>
-            </div>
-          </div>
-          <Button onClick={() => saveTariffs(store)} disabled={bulkUpdate.isPending}>
-            {bulkUpdate.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save Tariffs
-          </Button>
-        </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search wilaya..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left py-3 px-4 font-medium">Wilaya</th>
-                <th className="text-center py-3 px-4 font-medium">Home Delivery (DZD)</th>
-                <th className="text-center py-3 px-4 font-medium">Bureau Delivery (DZD)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tariffs.map((tariff, index) => (
-                <tr key={tariff.id} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
-                  <td className="py-2 px-4 font-medium" dir="rtl">
-                    {tariff.wilaya_code} - {tariff.wilaya_name}
-                  </td>
-                  <td className="py-2 px-4">
-                    <Input
-                      type="text"
-                      pattern="[0-9]*"
-                      value={getLocalValue(tariff, 'home_price')}
-                      onChange={(e) => {
-                        updateLocalPrice(tariff.id, tariff, 'home_price', e.target.value);
-                      }}
-                      className="w-24 mx-auto text-center"
-                    />
-                  </td>
-                  <td className="py-2 px-4">
-                    <Input
-                      type="text"
-                      pattern="[0-9]*"
-                      value={getLocalValue(tariff, 'bureau_price')}
-                      onChange={(e) => {
-                        updateLocalPrice(tariff.id, tariff, 'bureau_price', e.target.value);
-                      }}
-                      className="w-24 mx-auto text-center"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
-  );
+
 
   return (
     <div className="space-y-6">
@@ -213,6 +227,10 @@ const AdminTarifs: React.FC = () => {
           store="laghouat"
           storeName="Laghouat"
           storeColor="bg-primary"
+          saveTariffs={saveTariffs}
+          bulkUpdate={bulkUpdate}
+          getLocalValue={getLocalValue}
+          updateLocalPrice={updateLocalPrice}
         />
 
         <TariffTable
@@ -222,6 +240,10 @@ const AdminTarifs: React.FC = () => {
           store="aflou"
           storeName="Aflou"
           storeColor="bg-orange-500"
+          saveTariffs={saveTariffs}
+          bulkUpdate={bulkUpdate}
+          getLocalValue={getLocalValue}
+          updateLocalPrice={updateLocalPrice}
         />
       </div>
     </div>

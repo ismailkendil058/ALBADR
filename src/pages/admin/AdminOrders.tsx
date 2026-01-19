@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Select, 
@@ -43,6 +44,8 @@ import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useIsMobile } from '@/hooks/use-mobile';
+import OrderCard from '@/components/admin/orders/OrderCard';
 
 const PAGE_SIZE = 20;
 
@@ -68,6 +71,7 @@ const AdminOrders: React.FC = () => {
     fromDate: filters.fromDate, toDate: filters.toDate,
   });
   const { data: orders = [], count = 0 } = ordersData || {};
+  const isMobile = useIsMobile();
   
   const updateStatus = useUpdateOrderStatus();
   const bulkUpdateStatus = useBulkUpdateOrderStatus();
@@ -85,8 +89,10 @@ const AdminOrders: React.FC = () => {
   }, [debouncedSearchQuery, filters.status, filters.deliveryType, filters.store, filters.fromDate, filters.toDate]);
   
   useEffect(() => {
-    setSelectedOrders([]);
-  }, [orders]);
+    if (selectedOrders.length > 0) {
+      setSelectedOrders([]);
+    }
+  }, [orders, selectedOrders.length]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -144,7 +150,7 @@ const AdminOrders: React.FC = () => {
             <p className="font-medium">{selectedOrders.length} orders selected</p>
             <div className="flex items-center gap-2">
               <Select value={bulkAction} onValueChange={setBulkAction}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Change status..." /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Change status..." /></SelectTrigger>
                 <SelectContent>
                   {Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}
                 </SelectContent>
@@ -179,41 +185,71 @@ const AdminOrders: React.FC = () => {
           )}
       </CardContent></Card>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b bg-muted/50 text-left"><th className="p-3"><Checkbox checked={selectedOrders.length === orders.length && orders.length > 0} onCheckedChange={toggleAllOrders} /></th><th className="p-3 font-medium">Order #</th><th className="p-3 font-medium">Customer</th><th className="p-3 font-medium">Delivery</th><th className="p-3 font-medium">Store</th><th className="p-3 font-medium">Total</th><th className="p-3 font-medium">Status</th><th className="p-3 font-medium">Date</th><th className="p-3 font-medium">Actions</th></tr></thead>
-              <tbody>
-                {isLoading ? (Array.from({ length: 10 }).map((_, i) => <tr key={i} className="border-b"><td colSpan={10} className="p-4"><Skeleton className="h-6 w-full" /></td></tr>))
-                : orders.map((order) => (
-                  <tr key={order.id} className="border-b hover:bg-muted/30">
-                    <td className="p-3"><Checkbox checked={selectedOrders.includes(order.id)} onCheckedChange={() => toggleOrderSelection(order.id)} /></td>
-                    <td className="p-3 font-mono text-xs">{order.order_number}</td>
-                    <td className="p-3"><div><p className="font-medium">{order.customer_name}</p><p className="text-xs text-muted-foreground">{order.customer_phone}</p></div></td>
-                    <td className="p-3"><div className="flex items-center gap-1.5">
-                        {order.delivery_type === 'home' && <Truck className="w-4 h-4" />}
-                        {order.delivery_type === 'bureau' && <Building2 className="w-4 h-4" />}
-                        {order.delivery_type === 'pickup' && <Store className="w-4 h-4" />}
-                        <span>{deliveryLabels[order.delivery_type]}</span>
-                    </div></td>
-                    <td className="p-3 capitalize">{order.send_from_store}</td>
-                    <td className="p-3 font-semibold">{order.total.toLocaleString()} DZD</td>
-                    <td className="p-3"><Select value={order.status} onValueChange={(v) => handleSingleStatusChange(order.id, v as OrderStatus)}><SelectTrigger className={`w-[120px] h-8 text-xs border-0 ${statusColors[order.status]}`}><SelectValue /></SelectTrigger><SelectContent>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></td>
-                    <td className="p-3 text-xs">{format(parseISO(order.created_at), 'dd/MM/yyyy HH:mm')}</td>
-                    <td className="p-3"><Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}><Eye className="w-4 h-4" /></Button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {orders.length === 0 && !isLoading && <div className="py-12 text-center"><Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">No orders found</p></div>}
-        </CardContent>
-      </Card>
+      {isMobile ? (
+        <div className="space-y-4">
+          {isLoading ? (
+            Array.from({ length: 10 }).map((_, i) => (
+              <Card key={i}><CardContent className="p-4"><Skeleton className="h-32 w-full" /></CardContent></Card>
+            ))
+          ) : orders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              isSelected={selectedOrders.includes(order.id)}
+              onSelect={toggleOrderSelection}
+              onViewDetails={setSelectedOrder}
+              onStatusChange={handleSingleStatusChange}
+              statusLabels={statusLabels}
+              statusColors={statusColors}
+              deliveryLabels={deliveryLabels}
+            />
+          ))}
+          {orders.length === 0 && !isLoading && (
+            <div className="py-12 text-center">
+              <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No orders found</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b bg-muted/50 text-left"><th className="p-3"><Checkbox checked={selectedOrders.length === orders.length && orders.length > 0} onCheckedChange={toggleAllOrders} /></th><th className="p-3 font-medium">Order #</th><th className="p-3 font-medium">Customer</th><th className="p-3 font-medium">Delivery</th><th className="p-3 font-medium">Store</th><th className="p-3 font-medium">Total</th><th className="p-3 font-medium">Status</th><th className="p-3 font-medium">Date</th><th className="p-3 font-medium">Actions</th></tr></thead>
+                <tbody>
+                  {isLoading ? (Array.from({ length: 10 }).map((_, i) => <tr key={i} className="border-b"><td colSpan={10} className="p-4"><Skeleton className="h-6 w-full" /></td></tr>))
+                  : orders.map((order) => (
+                    <tr key={order.id} className="border-b hover:bg-muted/30">
+                      <td className="p-3"><Checkbox checked={selectedOrders.includes(order.id)} onCheckedChange={() => toggleOrderSelection(order.id)} /></td>
+                      <td className="p-3 font-mono text-xs">{order.order_number}</td>
+                      <td className="p-3"><div><p className="font-medium">{order.customer_name}</p><p className="text-xs text-muted-foreground">{order.customer_phone}</p></div></td>
+                      <td className="p-3"><div className="flex items-center gap-1.5">
+                          {order.delivery_type === 'home' && <Truck className="w-4 h-4" />}
+                          {order.delivery_type === 'bureau' && <Building2 className="w-4 h-4" />}
+                          {order.delivery_type === 'pickup' && <Store className="w-4 h-4" />}
+                          <span>{deliveryLabels[order.delivery_type]}</span>
+                      </div></td>
+                      <td className="p-3 capitalize">{order.send_from_store}</td>
+                      <td className="p-3 font-semibold">{order.total.toLocaleString()} DZD</td>
+                      <td className="p-3"><Select value={order.status} onValueChange={(v) => handleSingleStatusChange(order.id, v as OrderStatus)}><SelectTrigger className={`w-[120px] h-8 text-xs border-0 ${statusColors[order.status]}`}><SelectValue /></SelectTrigger><SelectContent>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></td>
+                      <td className="p-3 text-xs">{format(parseISO(order.created_at), 'dd/MM/yyyy HH:mm')}</td>
+                      <td className="p-3"><Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}><Eye className="w-4 h-4" /></Button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {orders.length === 0 && !isLoading && <div className="py-12 text-center"><Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">No orders found</p></div>}
+          </CardContent>
+        </Card>
+      )}
 
-      {totalPages > 1 && <Pagination><PaginationContent>
+      {totalPages > 1 && <Pagination><PaginationContent className="flex-wrap">
         <PaginationItem><PaginationPrevious href="#" onClick={(e) => { e.preventDefault(); setPage(p => Math.max(1, p - 1)); }} className={page === 1 ? 'pointer-events-none opacity-50' : ''} /></PaginationItem>
-        {[...Array(totalPages)].map((_, i) => (<PaginationItem key={i}><PaginationLink href="#" onClick={(e) => { e.preventDefault(); setPage(i + 1); }} isActive={page === i + 1}>{i + 1}</PaginationLink></PaginationItem>))}
+        <div className="hidden sm:flex">
+          {[...Array(totalPages)].map((_, i) => (<PaginationItem key={i}><PaginationLink href="#" onClick={(e) => { e.preventDefault(); setPage(i + 1); }} isActive={page === i + 1}>{i + 1}</PaginationLink></PaginationItem>))}
+        </div>
         <PaginationItem><PaginationNext href="#" onClick={(e) => { e.preventDefault(); setPage(p => Math.min(totalPages, p + 1)); }} className={page === totalPages ? 'pointer-events-none opacity-50' : ''} /></PaginationItem>
       </PaginationContent></Pagination>}
 

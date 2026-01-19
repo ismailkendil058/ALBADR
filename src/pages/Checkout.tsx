@@ -79,6 +79,7 @@ const Checkout = () => {
   const { items, totalPrice, clearCart, isLoading } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   const createOrder = useCreateOrder(); // Instantiate the hook
 
@@ -192,9 +193,32 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      const wilayaCode = parseInt(formData.wilaya.split(' - ')[0], 10);
-      const wilayaName = formData.wilaya.split(' - ')[1];
+      let wilayaCode: number | null = null;
+      let wilayaName: string | null = null;
 
+      if (formData.deliveryMethod === 'pickup' && selectedStoreInfo) {
+        // For pickup, get wilaya from the selected store
+        const storeWilaya = WILAYAS.find(w => w.includes(selectedStoreInfo.wilaya));
+        if (storeWilaya) {
+          wilayaCode = parseInt(storeWilaya.split(' - ')[0], 10);
+          wilayaName = storeWilaya.split(' - ')[1];
+        }
+      } else if (formData.wilaya) {
+        // For home or bureau delivery, get wilaya from form data
+        wilayaCode = parseInt(formData.wilaya.split(' - ')[0], 10);
+        wilayaName = formData.wilaya.split(' - ')[1];
+      }
+
+      if (wilayaCode === null || wilayaName === null) {
+        toast({
+          title: "خطأ",
+          description: "تعذر تحديد معلومات الولاية. يرجى التحقق من تحديد الولاية أو المتجر بشكل صحيح.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Determine sending store based on cheapest delivery
       let sendFromStoreId: string;
       if (formData.deliveryMethod === 'pickup') {
@@ -232,12 +256,13 @@ const Checkout = () => {
         total_price: item.product.price * item.quantity,
       }));
 
-      await createOrder.mutateAsync({
+      const newOrder = await createOrder.mutateAsync({
         order: orderPayload,
         items: orderItemsPayload,
       });
 
       setOrderPlaced(true);
+      setOrderNumber(newOrder.order_number);
       clearCart();
       toast({
         title: "نجاح",
@@ -309,10 +334,11 @@ const Checkout = () => {
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
             <h1 className="text-2xl md:text-3xl font-arabic-display font-bold text-secondary mb-4">
-              تم تأكيد طلبك بنجاح!
+              تم تأكيد طلبك بنجاح! {orderNumber && `(رقم الطلب: ${orderNumber})`}
             </h1>
             <p className="text-muted-foreground font-body mb-6">
               شكراً لك على طلبك. سنتواصل معك قريباً لتأكيد التفاصيل.
+              {orderNumber && ` رقم طلبك هو: ${orderNumber}.`}
             </p>
             <Button onClick={() => navigate('/')} className="font-body">
               العودة للرئيسية
@@ -602,7 +628,7 @@ const Checkout = () => {
                   {/* Products */}
                   <div className="space-y-4 mb-6">
                     {items.map((item) => (
-                      <div key={item.product.id} className="flex gap-3">
+                      <div key={item.selectedWeight ? `${item.product.id}-${item.selectedWeight.id}` : item.product.id} className="flex gap-3">
                         <img
                           src={item.product.image}
                           alt={item.product.nameAr}

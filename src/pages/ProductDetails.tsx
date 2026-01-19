@@ -16,7 +16,8 @@ const ProductDetails = () => {
   const [selectedWeightId, setSelectedWeightId] = useState<string | null>(null);
 
   const { data: product, isLoading } = useProduct(id);
-  const { data: allProducts = [] } = useProducts();
+  const { data: allProductsData } = useProducts();
+  const allProducts = allProductsData?.data || [];
 
   const relatedProducts = allProducts
     .filter(p => p.category_id === product?.category_id && p.id !== id)

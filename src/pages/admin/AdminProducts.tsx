@@ -280,7 +280,12 @@ const AdminProducts: React.FC = () => {
               <div className="space-y-2"><Label>Base Price (DZD) *</Label><Input type="text" value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} placeholder="Enter price" /></div>
               <div className="space-y-2"><Label>Original Price (DZD)</Label><Input type="number" value={formData.original_price} onChange={(e) => setFormData(prev => ({ ...prev, original_price: e.target.value }))} placeholder="For promotions" /></div>
             </div>
-            <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>Category</Label><Select value={formData.category_id} onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v }))}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name_ar} - {cat.name_fr}</SelectItem>))}</SelectContent></Select></div></div>
+            <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>Category</Label><Select value={formData.category_id} onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v }))}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>
+                                  <div className="flex flex-col">
+                                    <span>{cat.name_ar}</span>
+                                    <span className="text-muted-foreground text-sm">{cat.name_fr}</span>
+                                  </div>
+                                </SelectItem>))}</SelectContent></Select></div></div>
             <div className="space-y-3"><Label>Product Image</Label><div className="flex gap-4">
                 <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/50 overflow-hidden">
                   {imagePreview ? <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" /> : <ImageIcon className="w-8 h-8 text-muted-foreground" />}
