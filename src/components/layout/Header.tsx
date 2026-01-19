@@ -95,7 +95,7 @@ const Header = () => {
                     <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
                   ) : (
                     categories.map((category) => (
-                      <Link key={category.id} to={`/category/${category.id}`} className={`flex items-center justify-between px-4 py-3 font-body text-foreground hover:bg-muted transition-colors ${category.isSpecial ? 'border-r-4 border-primary bg-primary/5' : ''}`}>
+                      <Link key={category.id} to={`/category/${category.id}`}>
                                                   <span>{category.nameAr}</span>
                                                   {category.productCount > 0 && (
                                                     <span className="text-muted-foreground text-sm">({category.productCount})</span>

@@ -24,20 +24,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Badges */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2">
-          {product.is_new && (
-            <span className="badge-new">جديد</span>
-          )}
-          {product.is_promo && (
-            <span className="badge-promo">عرض</span>
-          )}
-          {product.is_best_seller && (
-            <span className="bg-secondary text-secondary-foreground px-3 py-1 text-sm font-medium rounded-full">
-              الأكثر مبيعاً
-            </span>
-          )}
-        </div>
+
 
         {/* Quick Actions Overlay */}
         <Link to={`/product/${product.id}`} className="quick-view-overlay gap-3">
