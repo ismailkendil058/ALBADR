@@ -96,9 +96,10 @@ const Header = () => {
                   ) : (
                     categories.map((category) => (
                       <Link key={category.id} to={`/category/${category.id}`} className={`flex items-center justify-between px-4 py-3 font-body text-foreground hover:bg-muted transition-colors ${category.isSpecial ? 'border-r-4 border-primary bg-primary/5' : ''}`}>
-                        <span>{category.nameAr}</span>
-                        <span className="text-muted-foreground text-sm">({category.productCount})</span>
-                      </Link>
+                                                  <span>{category.nameAr}</span>
+                                                  {category.productCount > 0 && (
+                                                    <span className="text-muted-foreground text-sm">({category.productCount})</span>
+                                                  )}                      </Link>
                     ))
                   )}
                 </div>
@@ -123,7 +124,9 @@ const Header = () => {
                 categories.map((category) => (
                   <Link key={category.id} to={`/category/${category.id}`} className={`block px-4 py-3 font-body text-foreground hover:bg-muted rounded-lg transition-colors ${category.isSpecial ? 'border-r-4 border-primary bg-primary/5' : ''}`} onClick={() => setIsMenuOpen(false)}>
                     <span>{category.nameAr}</span>
-                    <span className="text-muted-foreground text-sm mr-2">({category.productCount})</span>
+                    {category.productCount > 0 && (
+                      <span className="text-muted-foreground text-sm mr-2">({category.productCount})</span>
+                    )}
                   </Link>
                 ))
               )}

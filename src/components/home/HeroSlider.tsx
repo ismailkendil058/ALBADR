@@ -2,20 +2,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import categoryHerbs from '@/assets/category-herbs.jpg';
-import categorySpices from '@/assets/category-spices.jpg';
-import productCinnamon from '@/assets/product-cinnamon.jpg';
+import image1 from '@/assets/download (1).jpg';
+import image2 from '@/assets/Plantes aromatiques à jolie floraison_ 8 herbes magnifiques.jpg';
+import image3 from '@/assets/Hibiscus Tea Blend with Lemongrass and Rosehips - Sample Bag.jpg';
 
 interface Slide {
   id: number;
-  image: string;
+  image: string; // This will now refer to a public path
   slogan: string;
 }
 
 const slides: Slide[] = [
-  { id: 1, image: categoryHerbs, slogan: "نكهات أصيلة، جودة لا مثيل لها" },
-  { id: 2, image: categorySpices, slogan: "توابل البدر: سر كل وصفة شهية" },
-  { id: 3, image: productCinnamon, slogan: "أفضل أنواع القرفة لتجربة فريدة" },
+  { id: 1, image: image1, slogan: "حيث تلتقي الأصالة بالجودة في كل نكهة." },
+  { id: 2, image: image2, slogan: "ارتقِ بمذاقك، اكتشف عالمًا من النكهات." },
+  { id: 3, image: image3, slogan: "كل طبق حكاية، كل نكهة إلهام." },
 ];
 
 const HeroSlider = () => {
