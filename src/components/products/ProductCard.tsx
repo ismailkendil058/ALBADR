@@ -1,8 +1,6 @@
 import React from 'react';
-import { Eye, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
 import { Product } from '@/hooks/useProducts';
-import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -10,8 +8,6 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { addItem, setIsCartOpen } = useCart();
-
   return (
     <div className="product-card group">
       {/* Image Container */}
@@ -49,7 +45,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </p>
         
         {/* Price */}
-        <div className="flex items-baseline gap-2 mb-3">
+        <div className="flex items-baseline gap-2">
           <span className="text-lg font-bold text-primary" dir="ltr">
             {product.price} DZD
           </span>
@@ -59,19 +55,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           )}
         </div>
-
-        {/* Add to Cart */}
-        <Button 
-          className="w-full font-body"
-          onClick={() => {
-            if(!product) return;
-            addItem(product);
-            setIsCartOpen(true);
-          }}
-        >
-          <ShoppingCart className="w-4 h-4 ml-2" />
-          أضف للسلة
-        </Button>
       </div>
     </div>
   );

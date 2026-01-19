@@ -38,7 +38,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { 
-  Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2
+  Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2, Scale
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -92,7 +92,7 @@ const AdminOrders: React.FC = () => {
     if (selectedOrders.length > 0) {
       setSelectedOrders([]);
     }
-  }, [orders, selectedOrders.length]);
+  }, [orders]);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -258,7 +258,17 @@ const AdminOrders: React.FC = () => {
             <DialogHeader><DialogTitle>Order Details - {selectedOrder.order_number}</DialogTitle></DialogHeader>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><Phone className="w-4 h-4" />Customer Information</h4><p>{selectedOrder.customer_name}</p><p className="text-muted-foreground">{selectedOrder.customer_phone}</p>{selectedOrder.customer_email && (<p className="text-muted-foreground">{selectedOrder.customer_email}</p>)}</div><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" />Delivery Information</h4><p>{selectedOrder.wilaya_name}</p>{selectedOrder.address && <p className="text-muted-foreground">{selectedOrder.address}</p>}<p className="text-sm">Type: {deliveryLabels[selectedOrder.delivery_type]}</p><p className="text-sm">Store: {selectedOrder.send_from_store.charAt(0).toUpperCase() + selectedOrder.send_from_store.slice(1)}</p></div></div>
-              <div><h4 className="font-semibold mb-3">Order Items</h4><div className="space-y-2">{selectedOrder.items.map((item, index) => (<div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg"><div><p className="font-medium">{item.product_name_ar}</p><p className="text-sm text-muted-foreground">{item.product_name_fr}</p>{item.weight && <p className="text-sm text-muted-foreground">Weight: {item.weight}</p>}</div><div className="text-right"><p className="font-semibold">{item.total_price.toLocaleString()} DZD</p><p className="text-sm text-muted-foreground">{item.quantity} × {item.unit_price.toLocaleString()} DZD</p></div></div>))}</div></div>
+              <div><h4 className="font-semibold mb-3">Order Items</h4><div className="space-y-2">{selectedOrder.items.map((item, index) => (<div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">                      <div>
+                        <p className="font-medium">
+                          {(item.product_name_ar || item.product_name_fr || 'No Product Name Available')}
+                        </p>
+                        {item.weight && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Scale className="w-3 h-3" /> {item.weight}</p>
+                        )}
+                        {item.product_name_ar && item.product_name_fr && item.product_name_ar !== item.product_name_fr && (
+                          <p className="text-sm text-muted-foreground">{item.product_name_fr}</p>
+                        )}
+                      </div><div className="text-right"><p className="font-semibold">{item.total_price.toLocaleString()} DZD</p><p className="text-sm text-muted-foreground">{item.quantity} × {item.unit_price.toLocaleString()} DZD</p></div></div>))}</div></div>
               <div className="border-t pt-4 space-y-2"><div className="flex justify-between"><span>Subtotal</span><span>{selectedOrder.subtotal.toLocaleString()} DZD</span></div><div className="flex justify-between"><span>Delivery</span><span>{selectedOrder.delivery_price.toLocaleString()} DZD</span></div><div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">{selectedOrder.total.toLocaleString()} DZD</span></div></div>
               {selectedOrder.notes && (<div className="bg-muted/50 p-4 rounded-lg"><h4 className="font-semibold mb-2">Notes</h4><p className="text-sm">{selectedOrder.notes}</p></div>)}
             </div>

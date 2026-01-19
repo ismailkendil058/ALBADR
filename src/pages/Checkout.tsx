@@ -248,11 +248,11 @@ const Checkout = () => {
 
       const orderItemsPayload = items.map(item => ({
         product_id: item.product.id,
-        product_name_ar: item.product.nameAr || '',
-        product_name_fr: item.product.nameFr || '',
+        product_name_ar: item.product.nameAr || item.product.nameFr || 'Unnamed Product (AR)',
+        product_name_fr: item.product.nameFr || item.product.nameAr || 'Unnamed Product (FR)',
         quantity: item.quantity,
         unit_price: item.product.price,
-        weight: item.weight || null, // Assuming item.weight might exist in CartContext item type
+        weight: item.selectedWeight?.weight || item.weight || null,
         total_price: item.product.price * item.quantity,
       }));
 

@@ -42,8 +42,11 @@ export function useOrders({
         .from('orders')
         .select(`
           *,
-          items:order_items(*)
-        `, { count: 'exact' });
+          items:order_items(
+            *,
+            products(name_ar, name_fr)
+          )
+        `);
 
       if (searchQuery) {
         query = query.or(`order_number.ilike.%${searchQuery}%,customer_name.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%`);
