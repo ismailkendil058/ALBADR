@@ -86,6 +86,8 @@ const HeroSlider = () => {
             src={slide.image}
             alt={`Slide ${slide.id}`}
             className="w-full h-full object-cover"
+            decoding="async"
+            fetchpriority={index === currentSlide ? "high" : "auto"}
           />
           <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 dir-rtl" style={{ direction: 'rtl' }}>

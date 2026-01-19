@@ -43,12 +43,12 @@ const Footer = () => {
               <li className="flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
                 <a href="https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc" target="_blank" rel="noopener noreferrer">
-                  شارع التحرير، رقم 45 الجزائر العاصمة، الجزائر
+                  Laghouat,Algeria
                 </a>
               </li>
               <li className="flex items-center gap-3" dir="ltr">
                 <Phone className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>0660 40 85 20</span>
+                <a href="tel:+213660408520" className="hover:text-primary transition-colors">0660 40 85 20</a>
               </li>
               <li className="flex items-center gap-3" dir="ltr">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />

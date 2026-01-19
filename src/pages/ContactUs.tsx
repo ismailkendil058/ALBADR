@@ -109,9 +109,7 @@ const ContactUs = () => {
                         rel="noopener noreferrer" 
                         className="text-muted-foreground font-body hover:text-primary transition-colors"
                       >
-                        شارع التحرير، رقم 45
-                        <br />
-                        الجزائر العاصمة، الجزائر
+                        Laghouat,Algeria
                       </a>
                     </div>
                   </div>

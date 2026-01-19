@@ -60,7 +60,7 @@ const ProductDetails = () => {
   const handleAddToCart = () => {
     const cartProduct = {
       id: product.id,
-      nameAr: product.name_ar,
+      nameAr: product.name_ar || '',
       nameFr: product.name_fr,
       price: displayPrice,
       originalPrice: product.original_price || undefined,
@@ -103,8 +103,7 @@ const ProductDetails = () => {
                   <ChevronLeft className="w-4 h-4" />
                 </>
               )}
-              <span className="text-foreground">{product.name_ar}</span>
-            </nav>
+                                <span className="text-foreground">{product.name_ar || ''}</span>            </nav>
           </div>
         </div>
 
@@ -117,7 +116,7 @@ const ProductDetails = () => {
                 <div className="aspect-square rounded-xl overflow-hidden bg-muted">
                   <img
                     src={product.image || '/placeholder.svg'}
-                    alt={product.name_ar}
+                    alt={product.name_ar || ''}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -142,7 +141,7 @@ const ProductDetails = () => {
               <div className="space-y-6">
                 <div>
                   <h1 className="text-3xl md:text-4xl font-arabic-display font-bold text-secondary mb-2">
-                    {product.name_ar}
+                    {product.name_ar || ''}
                   </h1>
                   <p className="text-lg font-french text-muted-foreground">
                     {product.name_fr}

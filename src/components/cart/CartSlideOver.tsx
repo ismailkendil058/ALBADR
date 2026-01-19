@@ -56,6 +56,7 @@ const CartSlideOver = () => {
                       src={item.product.image}
                       alt={item.product.nameAr}
                       className="w-20 h-20 object-cover rounded-md"
+                      decoding="async"
                     />
                     <div className="flex-1">
                       <h3 className="font-arabic font-medium text-foreground">

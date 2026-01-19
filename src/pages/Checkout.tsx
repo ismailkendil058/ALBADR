@@ -607,6 +607,7 @@ const Checkout = () => {
                           src={item.product.image}
                           alt={item.product.nameAr}
                           className="w-16 h-16 rounded-lg object-cover"
+                          decoding="async"
                         />
                         <div className="flex-1">
                           <h4 className="font-arabic text-sm font-medium line-clamp-1">

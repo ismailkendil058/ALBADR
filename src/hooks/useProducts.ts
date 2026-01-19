@@ -47,6 +47,8 @@ export function useProduct(id: string | undefined) {
       const { data, error } = await supabase
         .from('products')
         .select(`
+          name_ar,
+          name_fr,
           *,
           category:categories(*),
           weights:product_weights(*)

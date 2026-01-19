@@ -12,7 +12,7 @@ const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
 
-  const { data: allProducts, isLoading, error } = useProducts();
+  const { data: productsResult, isLoading, error } = useProducts();
 
   if (isLoading) {
     return (
@@ -32,7 +32,9 @@ const SearchResults = () => {
     );
   }
 
-  const searchResults = (allProducts || []).filter(product =>
+  const allProducts = productsResult?.data ?? [];
+
+  const searchResults = allProducts.filter(product =>
     product.name_ar.toLowerCase().includes(query.toLowerCase()) ||
     product.name_fr.toLowerCase().includes(query.toLowerCase()) ||
     (product.description_ar && product.description_ar.toLowerCase().includes(query.toLowerCase())) ||

@@ -105,7 +105,7 @@ const CategoryPage = () => {
         </div>
 
         <section className="relative h-[200px] md:h-[250px] overflow-hidden">
-          <img loading="lazy" src={category.image || '/placeholder.svg'} alt={category.name_ar} className="w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={category.image || '/placeholder.svg'} alt={category.name_ar} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-secondary/60 flex items-center justify-center">
             <div className="text-center">
               <h1 className="text-3xl md:text-4xl font-arabic-display font-bold text-primary-foreground mb-2">{category.name_ar}</h1>

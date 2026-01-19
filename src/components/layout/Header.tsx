@@ -42,9 +42,9 @@ const Header = () => {
                 placeholder="البحث في المنتجات..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-4 pl-10 py-2 bg-muted border-border font-body"
+                className="pr-10 pl-4 py-2 bg-muted border-border font-body"
               />
-              <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2">
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
                 <Search className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
               </button>
             </div>
@@ -70,8 +70,8 @@ const Header = () => {
         {/* Mobile Search */}
         <form onSubmit={handleSearch} className="md:hidden mt-3">
           <div className="relative">
-            <Input type="text" placeholder="البحث في المنتجات..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-4 pl-10 py-2 bg-muted border-border font-body w-full" />
-            <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2">
+            <Input type="text" placeholder="البحث في المنتجات..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10 pl-4 py-2 bg-muted border-border font-body w-full" />
+            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2">
               <Search className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>

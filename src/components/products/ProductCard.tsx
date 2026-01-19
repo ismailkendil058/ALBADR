@@ -18,6 +18,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <div className="block relative aspect-square overflow-hidden">
         <img
           loading="lazy"
+          decoding="async"
           src={product.image || '/placeholder.svg'}
           alt={product.name_ar}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -53,7 +54,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <div className="p-4">
         <Link to={`/product/${product.id}`}>
           <h3 className="font-arabic font-medium text-foreground mb-1 line-clamp-1 hover:text-primary transition-colors">
-            {product.name_ar}
+            {product.name_ar || ''}
           </h3>
         </Link>
         <p className="text-sm font-french text-muted-foreground mb-2 line-clamp-1">

@@ -1,4 +1,5 @@
 import { Phone, Facebook, Instagram } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TopBar = () => {
   return (
@@ -24,7 +25,7 @@ const TopBar = () => {
           >
             <Instagram className="w-4 h-4" />
           </a>
-          <span className="text-sm font-french mr-4">Contact</span>
+          <Link to="/contact-us" className="text-sm font-french mr-4 hover:text-primary transition-colors">Contact</Link>
         </div>
       </div>
     </div>
