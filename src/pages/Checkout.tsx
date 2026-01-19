@@ -11,7 +11,7 @@ import {
   Package,
   CalendarIcon,
 } from 'lucide-react';
-import { addDays, format, startOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { arDZ } from 'date-fns/locale';
 import TopBar from '@/components/layout/TopBar';
 import Header from '@/components/layout/Header';
@@ -130,7 +130,6 @@ const Checkout = () => {
   const selectedStoreInfo = STORES.find((store) => store.id === formData.selectedStore);
 
   const today = useMemo(() => startOfDay(new Date()), []);
-  const pickupMaxDate = useMemo(() => addDays(today, 3), [today]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -561,14 +560,14 @@ const Checkout = () => {
                                 mode="single"
                                 selected={formData.pickupDate}
                                 onSelect={(date) => setFormData({ ...formData, pickupDate: date })}
-                                disabled={(date) => date < today || date > pickupMaxDate}
+                                disabled={(date) => date < today}
                                 initialFocus
                                 className="p-3 pointer-events-auto"
                               />
                             </PopoverContent>
                           </Popover>
                           <p className="mt-2 text-xs text-muted-foreground font-body">
-                            يمكنك اختيار اليوم أو خلال 3 أيام القادمة.
+                            يمكنك اختيار تاريخ الاستلام المناسب لك.
                           </p>
                         </div>
 
