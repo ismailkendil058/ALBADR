@@ -38,11 +38,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { 
-  Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2, Scale
+  Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2, Scale, FileDown
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
+import { useOrders, useAllOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import OrderCard from '@/components/admin/orders/OrderCard';
@@ -83,6 +83,16 @@ const AdminOrders: React.FC = () => {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [bulkAction, setBulkAction] = useState<string>('');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const { refetch: fetchAllOrders } = useAllOrders({
+    searchQuery: debouncedSearchQuery,
+    status: filters.status,
+    deliveryType: filters.deliveryType,
+    store: filters.store,
+    fromDate: filters.fromDate,
+    toDate: filters.toDate,
+  });
 
   useEffect(() => {
     setPage(1);
@@ -134,7 +144,79 @@ const AdminOrders: React.FC = () => {
     updateStatus.mutateAsync({ id: orderId, status: newStatus });
     toast({ title: 'Updated', description: `Order status changed to ${statusLabels[newStatus]}.` });
   };
+
+        const handleExport = async () => {
+      setIsExporting(true);
+      try {
+        const { data: allOrders } = await fetchAllOrders();
+        if (!allOrders || allOrders.length === 0) {
+          toast({ title: 'Export Failed', description: 'No orders to export.', variant: 'destructive' });
+          return;
+        }
   
+        // Determine the maximum number of items in any order
+        let maxItems = 0;
+        allOrders.forEach(order => {
+          if (order.items && order.items.length > maxItems) {
+            maxItems = order.items.length;
+          }
+        });
+  
+        // Generate dynamic item headers
+        const itemHeaders = Array.from({ length: maxItems }, (_, i) => `Item ${i + 1}`);
+  
+        const csvHeader = [
+          "Order Number", "Customer Name", "Customer Phone",
+          "Wilaya", "Address", "Delivery Type", "Store",
+          "Subtotal", "Notes",
+          ...itemHeaders
+        ];
+  
+        const csvRows = allOrders.map(order => {
+          const baseColumns = [
+            order.order_number,
+            `"${order.customer_name}"`,
+            order.customer_phone,
+            order.wilaya_name,
+            `"${order.address || ''}"`,
+            deliveryLabels[order.delivery_type],
+            order.send_from_store,
+            order.subtotal,
+            `"${order.notes || ''}"`
+          ];
+  
+          // Map items to their string representation and pad with empty strings
+          const itemColumns = (order.items || []).map(item => 
+            `"${item.product_name_fr || item.product_name_ar} (Qty: ${item.quantity}, Price: ${item.unit_price}, Weight: ${item.weight || 'N/A'})"`
+          );
+  
+          // Pad with empty strings if an order has fewer items than maxItems
+          while (itemColumns.length < maxItems) {
+            itemColumns.push('');
+          }
+  
+          return [...baseColumns, ...itemColumns].join(',');
+        });
+  
+        const csvContent = '\uFEFF' + [csvHeader.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+  
+        toast({ title: 'Export Successful', description: `${allOrders.length} orders have been exported.` });
+  
+      } catch (error) {
+        console.error("Export failed:", error);
+        toast({ title: 'Export Failed', description: 'An error occurred while exporting orders.', variant: 'destructive' });
+      } finally {
+        setIsExporting(false);
+      }
+    };  
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
   return (
@@ -169,7 +251,11 @@ const AdminOrders: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Search by order ID, customer name, or phone..." value={filters.searchQuery} onChange={(e) => handleFilterChange('searchQuery', e.target.value)} className="pl-10" />
             </div>
-            <Button variant={showFilters ? "default" : "outline"} onClick={() => setShowFilters(!showFilters)}><Filter className="w-4 h-4 mr-2" />Filters{hasActiveFilters && (<span className="ml-2 w-2 h-2 bg-primary rounded-full" />)}</Button>
+            <Button variant={showFilters ? "secondary" : "outline"} onClick={() => setShowFilters(!showFilters)}><Filter className="w-4 h-4 mr-2" />Filters{hasActiveFilters && (<span className="ml-2 w-2 h-2 bg-primary rounded-full" />)}</Button>
+            <Button variant="default" className="bg-green-500 text-white hover:bg-green-600" onClick={handleExport} disabled={isExporting}>
+              {isExporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileDown className="w-4 h-4 mr-2" />}
+              Export
+            </Button>
           </div>
           {showFilters && (
             <div className="mt-4 pt-4 border-t space-y-4">

@@ -48,13 +48,14 @@ export function useBulkUpdateTariffs() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updates: { id: string; home_price: number; bureau_price: number }[]) => {
+    mutationFn: async (updates: { id: string; home_price: number; bureau_price: number; retour: number }[]) => {
       for (const update of updates) {
         const { error } = await supabase
           .from('tariffs')
           .update({ 
             home_price: update.home_price, 
-            bureau_price: update.bureau_price 
+            bureau_price: update.bureau_price,
+            retour: update.retour
           })
           .eq('id', update.id);
 

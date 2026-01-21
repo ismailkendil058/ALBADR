@@ -81,6 +81,69 @@ export function useOrders({
   });
 }
 
+export function useAllOrders({ 
+  searchQuery,
+  status,
+  deliveryType,
+  wilaya,
+  store,
+  fromDate,
+  toDate,
+}: { 
+  searchQuery?: string,
+  status?: string,
+  deliveryType?: string,
+  wilaya?: string,
+  store?: string,
+  fromDate?: string,
+  toDate?: string,
+}) {
+  return useQuery({
+    queryKey: ['orders', { searchQuery, status, deliveryType, wilaya, store, fromDate, toDate }],
+    queryFn: async () => {
+      let query = supabase
+        .from('orders')
+        .select(`
+          *,
+          items:order_items(
+            *,
+            products(name_ar, name_fr)
+          )
+        `);
+
+      if (searchQuery) {
+        query = query.or(`order_number.ilike.%${searchQuery}%,customer_name.ilike.%${searchQuery}%,customer_phone.ilike.%${searchQuery}%`);
+      }
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
+      if (deliveryType && deliveryType !== 'all') {
+        query = query.eq('delivery_type', deliveryType);
+      }
+      if (wilaya && wilaya !== 'all') {
+        query = query.eq('wilaya_name', wilaya);
+      }
+      if (store && store !== 'all') {
+        query = query.eq('send_from_store', store);
+      }
+      if (fromDate) {
+        query = query.gte('created_at', fromDate);
+      }
+      if (toDate) {
+        query = query.lte('created_at', toDate);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      return data as OrderWithItems[];
+    },
+    enabled: false, // Only run when manually triggered
+  });
+}
+
 export function useOrder(id: string | undefined) {
   return useQuery({
     queryKey: ['order', id],

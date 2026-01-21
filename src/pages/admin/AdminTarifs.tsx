@@ -16,9 +16,9 @@ interface TariffTableProps {
   storeName: string;
   storeColor: string;
   saveTariffs: (store: 'laghouat' | 'aflou') => Promise<void>;
-  bulkUpdate: UseMutationResult<any, Error, { id: string; home_price: number; bureau_price: number; }[], unknown>;
-  getLocalValue: (tariff: Tariff, field: 'home_price' | 'bureau_price') => string;
-  updateLocalPrice: (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price', value: string) => void;
+  bulkUpdate: UseMutationResult<any, Error, { id: string; home_price: number; bureau_price: number; retour: number }[], unknown>;
+  getLocalValue: (tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour') => string;
+  updateLocalPrice: (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour', value: string) => void;
 }
 
 const TariffTable: React.FC<TariffTableProps> = ({
@@ -72,6 +72,7 @@ const TariffTable: React.FC<TariffTableProps> = ({
               <th className="text-left py-3 px-4 font-medium">Wilaya</th>
               <th className="text-center py-3 px-4 font-medium">Home Delivery (DZD)</th>
               <th className="text-center py-3 px-4 font-medium">Bureau Delivery (DZD)</th>
+              <th className="text-center py-3 px-4 font-medium">Return Cost (DZD)</th>
             </tr>
           </thead>
           <tbody>
@@ -102,6 +103,17 @@ const TariffTable: React.FC<TariffTableProps> = ({
                     className="w-24 mx-auto text-center"
                   />
                 </td>
+                <td className="py-2 px-4">
+                  <Input
+                    type="text"
+                    pattern="[0-9]*"
+                    value={getLocalValue(tariff, 'retour')}
+                    onChange={(e) => {
+                      updateLocalPrice(tariff.id, tariff, 'retour', e.target.value);
+                    }}
+                    className="w-24 mx-auto text-center"
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -120,19 +132,23 @@ const AdminTarifs: React.FC = () => {
   const [searchAflou, setSearchAflou] = useState('');
   
   // Local state for editing
-  const [localTariffs, setLocalTariffs] = useState<Record<string, { home_price: string | number; bureau_price: string | number }>>({});
+  const [localTariffs, setLocalTariffs] = useState<Record<string, { home_price: string | number; bureau_price: string | number; retour: string | number }>>({});
 
   const laghouatTariffs = allTariffs.filter(t => t.store === 'laghouat');
   const aflouTariffs = allTariffs.filter(t => t.store === 'aflou');
 
-  const getLocalValue = (tariff: Tariff, field: 'home_price' | 'bureau_price') => {
+  const getLocalValue = (tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour') => {
     const value = localTariffs[tariff.id]?.[field] ?? tariff[field];
     return String(value);
   };
 
-  const updateLocalPrice = (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price', value: string) => {
+  const updateLocalPrice = (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour', value: string) => {
     setLocalTariffs(prev => {
-      const existingTariff = prev[tariffId] || { home_price: tariff.home_price, bureau_price: tariff.bureau_price };
+      const existingTariff = prev[tariffId] || { 
+        home_price: tariff.home_price, 
+        bureau_price: tariff.bureau_price,
+        retour: tariff.retour
+      };
       return {
         ...prev,
         [tariffId]: {
@@ -151,6 +167,7 @@ const AdminTarifs: React.FC = () => {
         id: t.id,
         home_price: parseFloat(String(localTariffs[t.id]?.home_price ?? t.home_price)) || 0,
         bureau_price: parseFloat(String(localTariffs[t.id]?.bureau_price ?? t.bureau_price)) || 0,
+        retour: parseFloat(String(localTariffs[t.id]?.retour ?? t.retour)) || 0,
       }));
 
     if (updates.length === 0) {
