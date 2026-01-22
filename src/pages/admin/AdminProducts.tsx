@@ -170,14 +170,26 @@ const AdminProducts: React.FC = () => {
       toast({ title: 'Error', description: 'Please fill in all required fields', variant: 'destructive' });
       return;
     }
+    const price = parseFloat(formData.price);
+    if (isNaN(price)) {
+      toast({ title: 'Error', description: 'Please enter a valid price', variant: 'destructive' });
+      return;
+    }
+
+    const original_price = formData.original_price ? parseFloat(formData.original_price) : null;
+    if (formData.original_price && (original_price === null || isNaN(original_price))) {
+        toast({ title: 'Error', description: 'Please enter a valid original price', variant: 'destructive' });
+        return;
+    }
+
     try {
       const productData = {
         name_ar: formData.name_ar, name_fr: formData.name_fr,
-        price: parseFloat(formData.price), category_id: formData.category_id || null,
+        price: price, category_id: formData.category_id || null,
         description_ar: formData.description_ar || null, has_weight_options: formData.has_weight_options,
         is_featured: formData.is_featured, is_best_seller: formData.is_best_seller,
         is_new: formData.is_new, is_promo: formData.is_promo, image: formData.image || null,
-        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
+        original_price: original_price,
       };
       const weightsData = formData.has_weight_options ? formWeights.filter(w => w.weight).map((w, i) => ({ weight: w.weight, price: w.price, sort_order: i })) : [];
       if (editingProductId) {
@@ -277,7 +289,7 @@ const AdminProducts: React.FC = () => {
               <div className="space-y-2"><Label>Name (French) *</Label><Input value={formData.name_fr} onChange={(e) => setFormData(prev => ({ ...prev, name_fr: e.target.value }))} placeholder="Nom du produit" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Base Price (DZD) *</Label><Input type="text" value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} placeholder="Enter price" /></div>
+              <div className="space-y-2"><Label>Base Price (DZD) *</Label><Input type="number" value={formData.price} onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))} placeholder="Enter price" /></div>
               <div className="space-y-2"><Label>Original Price (DZD)</Label><Input type="number" value={formData.original_price} onChange={(e) => setFormData(prev => ({ ...prev, original_price: e.target.value }))} placeholder="For promotions" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label>Category</Label><Select value={formData.category_id} onValueChange={(v) => setFormData(prev => ({ ...prev, category_id: v }))}><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>

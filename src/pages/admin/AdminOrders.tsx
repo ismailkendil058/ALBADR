@@ -44,11 +44,13 @@ import { format, parseISO, subDays } from 'date-fns';
 import { DateRangePicker } from '@/components/ui/date-range-picker'; // New import
 import { DateRange } from 'react-day-picker'; // New import
 import { useToast } from '@/hooks/use-toast';
-import { useOrders, useAllOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, useUpdateOrder, useCreateOrder, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
+import { useOrders, useAllOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, useUpdateOrder, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import OrderCard from '@/components/admin/orders/OrderCard';
 import { algerianWilayas } from '@/data/adminData'; // Import algerianWilayas
+import EditOrderDialog from '@/components/admin/orders/EditOrderDialog';
+import CreateOrderDialog from '@/components/admin/orders/CreateOrderDialog';
 
 const PAGE_SIZE = 20;
 
@@ -101,6 +103,11 @@ const AdminOrders: React.FC = () => {
     fromDate: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
     toDate: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
   });
+
+
+  const handleFilterChange = (key: keyof typeof filters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   const hasActiveFilters = useMemo(() => {
     const filtersWithoutSearch = { ...filters };
@@ -416,258 +423,5 @@ const AdminOrders: React.FC = () => {
   );
 };
 
-interface EditOrderDialogProps {
-  order: OrderWithItems | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-
-const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClose }) => {
-  const [formData, setFormData] = useState<Partial<OrderWithItems>>({});
-  const updateOrder = useUpdateOrder();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (order) {
-      setFormData({
-        customer_name: order.customer_name,
-        customer_phone: order.customer_phone,
-        wilaya_name: order.wilaya_name,
-        address: order.address,
-        delivery_type: order.delivery_type,
-        send_from_store: order.send_from_store,
-        notes: order.notes,
-        total: order.total, // Keeping total for display, but it shouldn't be edited directly
-        subtotal: order.subtotal, // Keeping subtotal for display, not edited directly
-        delivery_price: order.delivery_price, // Keeping delivery_price for display
-      });
-    }
-  }, [order]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
-    if (!order || !order.id) return;
-
-    try {
-      // Filter out fields that shouldn't be updated or are display only
-      const { 
-        order_number, 
-        items, 
-        created_at, 
-        ...updatableData 
-      } = formData;
-
-      await updateOrder.mutateAsync({ id: order.id, data: updatableData });
-      toast({ title: 'Order Updated', description: `Order ${order.order_number} has been updated.` });
-      onClose();
-    } catch (error) {
-      console.error("Failed to update order:", error);
-      toast({ title: 'Update Failed', description: 'An error occurred while updating the order.', variant: 'destructive' });
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit Order {order?.order_number}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="customer_name" className="text-right">Customer Name</Label>
-            <Input id="customer_name" name="customer_name" value={formData.customer_name || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="customer_phone" className="text-right">Customer Phone</Label>
-            <Input id="customer_phone" name="customer_phone" value={formData.customer_phone || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="wilaya_name" className="text-right">Wilaya</Label>
-            <Select name="wilaya_name" value={formData.wilaya_name || ''} onValueChange={(v) => handleSelectChange('wilaya_name', v)}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select Wilaya" />
-              </SelectTrigger>
-              <SelectContent>
-                {algerianWilayas.map((wilaya) => (
-                  <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="address" className="text-right">Address</Label>
-            <Input id="address" name="address" value={formData.address || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="delivery_type" className="text-right">Delivery Type</Label>
-            <Select name="delivery_type" value={formData.delivery_type || ''} onValueChange={(v) => handleSelectChange('delivery_type', v)}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select delivery type" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="send_from_store" className="text-right">Store</Label>
-            <Select name="send_from_store" value={formData.send_from_store || ''} onValueChange={(v) => handleSelectChange('send_from_store', v)}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select store" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="laghouat">Laghouat</SelectItem>
-                <SelectItem value="aflou">Aflou</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="notes" className="text-right">Notes</Label>
-            <Input id="notes" name="notes" value={formData.notes || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-        </div>
-        <Button onClick={handleSubmit} disabled={updateOrder.isPending}>
-          {updateOrder.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Save changes
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-interface CreateOrderDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState<Partial<OrderWithItems>>({
-    status: 'new', // Default status for new orders
-    delivery_type: 'home', // Default delivery type
-    send_from_store: 'laghouat', // Default store
-    total: 0,
-    subtotal: 0,
-    delivery_price: 0,
-    is_manual: true, // Mark as manual
-  });
-  const createOrder = useCreateOrder(); // This hook needs to be created
-  const { toast } = useToast();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      // Basic validation
-      if (!formData.customer_name || !formData.customer_phone || !formData.wilaya_name || 
-          (formData.delivery_type === 'home' && !formData.address)
-      ) {
-        toast({ title: 'Validation Error', description: 'Please fill in all required fields.', variant: 'destructive' });
-        return;
-      }
-
-      await createOrder.mutateAsync(formData);
-      toast({ title: 'Order Created', description: `New order for ${formData.customer_name} created successfully.` });
-      onClose();
-    } catch (error) {
-      console.error("Failed to create order:", error);
-      toast({ title: 'Creation Failed', description: 'An error occurred while creating the order.', variant: 'destructive' });
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create New Order</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="customer_name" className="text-right">Customer Name</Label>
-            <Input id="customer_name" name="customer_name" value={formData.customer_name || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="customer_phone" className="text-right">Customer Phone</Label>
-            <Input id="customer_phone" name="customer_phone" value={formData.customer_phone || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="wilaya_name" className="text-right">Wilaya</Label>
-            <Select name="wilaya" value={formData.wilaya_name || ''} onValueChange={(selectedValue) => {
-              const selectedWilaya = algerianWilayas.find(w => w.name === selectedValue);
-              if (selectedWilaya) {
-                setFormData(prev => ({
-                  ...prev,
-                  wilaya_name: selectedWilaya.name,
-                  wilaya_code: selectedWilaya.code
-                }));
-              }
-            }}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select Wilaya" />
-              </SelectTrigger>
-              <SelectContent>
-                {algerianWilayas.map((wilaya) => (
-                  <SelectItem key={wilaya.code} value={wilaya.name}>{wilaya.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {formData.delivery_type === 'home' && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="address" className="text-right">Address</Label>
-              <Input id="address" name="address" value={formData.address || ''} onChange={handleChange} className="col-span-3" />
-            </div>
-          )}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="delivery_type" className="text-right">Delivery Type</Label>
-            <Select name="delivery_type" value={formData.delivery_type || ''} onValueChange={(v) => handleSelectChange('delivery_type', v)}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select delivery type" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="send_from_store" className="text-right">Store</Label>
-            <Select name="send_from_store" value={formData.send_from_store || ''} onValueChange={(v) => handleSelectChange('send_from_store', v)}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select store" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="laghouat">Laghouat</SelectItem>
-                <SelectItem value="aflou">Aflou</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="notes" className="text-right">Notes</Label>
-            <Input id="notes" name="notes" value={formData.notes || ''} onChange={handleChange} className="col-span-3" />
-          </div>
-        </div>
-        <Button onClick={handleSubmit} disabled={createOrder.isPending}>
-          {createOrder.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Create Order
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 export default AdminOrders;

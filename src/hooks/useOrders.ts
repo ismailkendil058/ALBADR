@@ -278,18 +278,45 @@ export function useUpdateOrder() {
   });
 }
 
+export type NewOrderItem = Omit<TablesInsert<'order_items'>, 'order_id' | 'id'>;
+export type NewOrderWithItems = TablesInsert<'orders'> & { items: NewOrderItem[] };
+
+
 export function useCreateOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newOrderData: Partial<Tables<'orders'>>) => {
-      const { data, error } = await supabase
-        .from('orders')
-        .insert(newOrderData)
-        .select();
+    mutationFn: async (newOrderData: NewOrderWithItems) => {
+      const { items, ...orderData } = newOrderData;
 
-      if (error) throw error;
-      return data[0];
+      // 1. Insert the order
+      const { data: newOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Prepare and insert order items
+      if (items && items.length > 0) {
+        const orderItems = items.map(item => ({
+          ...item,
+          order_id: newOrder.id,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) {
+          // If items fail, delete the order we just created for consistency.
+          await supabase.from('orders').delete().eq('id', newOrder.id);
+          throw itemsError;
+        }
+      }
+
+      return newOrder;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
