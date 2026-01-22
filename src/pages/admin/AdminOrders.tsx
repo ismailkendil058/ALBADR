@@ -38,14 +38,17 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { 
-  Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2, Scale, FileDown
+  Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2, Scale, FileDown, Edit, Save, Plus
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
+import { DateRangePicker } from '@/components/ui/date-range-picker'; // New import
+import { DateRange } from 'react-day-picker'; // New import
 import { useToast } from '@/hooks/use-toast';
-import { useOrders, useAllOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
+import { useOrders, useAllOrders, useUpdateOrderStatus, useBulkUpdateOrderStatus, useBulkDeleteOrders, useUpdateOrder, useCreateOrder, OrderWithItems, OrderStatus } from '@/hooks/useOrders';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import OrderCard from '@/components/admin/orders/OrderCard';
+import { algerianWilayas } from '@/data/adminData'; // Import algerianWilayas
 
 const PAGE_SIZE = 20;
 
@@ -61,14 +64,16 @@ const deliveryLabels = { home: 'Home Delivery', bureau: 'Bureau', pickup: 'Picku
 const AdminOrders: React.FC = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
-    searchQuery: '', status: 'all', deliveryType: 'all', store: 'all', fromDate: '', toDate: '',
+    searchQuery: '', status: 'all', deliveryType: 'all', store: 'all',
   });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // New state for date range
   const debouncedSearchQuery = useDebounce(filters.searchQuery, 500);
 
   const { data: ordersData, isLoading } = useOrders({
     page, pageSize: PAGE_SIZE, searchQuery: debouncedSearchQuery,
     status: filters.status, deliveryType: filters.deliveryType, store: filters.store,
-    fromDate: filters.fromDate, toDate: filters.toDate,
+    fromDate: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+    toDate: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
   });
   const { data: orders = [], count = 0 } = ordersData || {};
   const isMobile = useIsMobile();
@@ -79,6 +84,9 @@ const AdminOrders: React.FC = () => {
   const { toast } = useToast();
 
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
+  const [editingOrder, setEditingOrder] = useState<OrderWithItems | null>(null);
+  const [showEditOrderDialog, setShowEditOrderDialog] = useState(false);
+  const [showCreateOrderDialog, setShowCreateOrderDialog] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -90,29 +98,26 @@ const AdminOrders: React.FC = () => {
     status: filters.status,
     deliveryType: filters.deliveryType,
     store: filters.store,
-    fromDate: filters.fromDate,
-    toDate: filters.toDate,
+    fromDate: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+    toDate: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
   });
+
+  const hasActiveFilters = useMemo(() => {
+    const filtersWithoutSearch = { ...filters };
+    delete filtersWithoutSearch.searchQuery;
+    return Object.values(filtersWithoutSearch).some(v => v !== 'all' && v !== '') || (dateRange?.from || dateRange?.to);
+  }, [filters, dateRange]);
+
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchQuery, filters.status, filters.deliveryType, filters.store, filters.fromDate, filters.toDate]);
-  
+  }, [debouncedSearchQuery, filters.status, filters.deliveryType, filters.store, dateRange]);
+
   useEffect(() => {
-    if (selectedOrders.length > 0) {
-      setSelectedOrders([]);
+    if (!showFilters && hasActiveFilters) { // Only clear if filters are active and panel is closing
+      clearFilters();
     }
-  }, [orders]);
-
-  const handleFilterChange = (key: keyof typeof filters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const clearFilters = () => {
-    setFilters({ searchQuery: '', status: 'all', deliveryType: 'all', store: 'all', fromDate: '', toDate: '' });
-  };
-
-  const hasActiveFilters = Object.values(filters).some((v, i) => i > 0 && v !== 'all' && v !== '');
+  }, [showFilters, hasActiveFilters]);
 
   const toggleOrderSelection = (orderId: string) => {
     setSelectedOrders(prev => prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]);
@@ -145,6 +150,16 @@ const AdminOrders: React.FC = () => {
     toast({ title: 'Updated', description: `Order status changed to ${statusLabels[newStatus]}.` });
   };
 
+  const clearFilters = () => {
+    setFilters({
+      searchQuery: '',
+      status: 'all',
+      deliveryType: 'all',
+      store: 'all',
+    });
+    setDateRange(undefined);
+  };
+
         const handleExport = async () => {
       setIsExporting(true);
       try {
@@ -153,7 +168,7 @@ const AdminOrders: React.FC = () => {
           toast({ title: 'Export Failed', description: 'No orders to export.', variant: 'destructive' });
           return;
         }
-  
+
         // Determine the maximum number of items in any order
         let maxItems = 0;
         allOrders.forEach(order => {
@@ -161,43 +176,43 @@ const AdminOrders: React.FC = () => {
             maxItems = order.items.length;
           }
         });
-  
+
         // Generate dynamic item headers
         const itemHeaders = Array.from({ length: maxItems }, (_, i) => `Item ${i + 1}`);
-  
+
         const csvHeader = [
           "Order Number", "Customer Name", "Customer Phone",
           "Wilaya", "Address", "Delivery Type", "Store",
           "Subtotal", "Notes",
           ...itemHeaders
         ];
-  
+
         const csvRows = allOrders.map(order => {
           const baseColumns = [
             order.order_number,
-            `"${order.customer_name}"`,
+            `"${order.customer_name}"`, // Corrected escaping for quotes within strings
             order.customer_phone,
             order.wilaya_name,
-            `"${order.address || ''}"`,
+            `"${order.address || ''}"`, // Corrected escaping for quotes within strings
             deliveryLabels[order.delivery_type],
             order.send_from_store,
             order.subtotal,
-            `"${order.notes || ''}"`
+            `"${order.notes || ''}"` // Corrected escaping for quotes within strings
           ];
-  
+
           // Map items to their string representation and pad with empty strings
-          const itemColumns = (order.items || []).map(item => 
-            `"${item.product_name_fr || item.product_name_ar} (Qty: ${item.quantity}, Price: ${item.unit_price}, Weight: ${item.weight || 'N/A'})"`
+          const itemColumns = (order.items || []).map(item =>
+            `"${item.product_name_fr || item.product_name_ar} (Qty: ${item.quantity}, Price: ${item.unit_price}, Weight: ${item.weight || 'N/A'})"` // Corrected escaping for quotes within strings
           );
-  
+
           // Pad with empty strings if an order has fewer items than maxItems
           while (itemColumns.length < maxItems) {
             itemColumns.push('');
           }
-  
+
           return [...baseColumns, ...itemColumns].join(',');
         });
-  
+
         const csvContent = '\uFEFF' + [csvHeader.join(','), ...csvRows].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
@@ -207,16 +222,16 @@ const AdminOrders: React.FC = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-  
+
         toast({ title: 'Export Successful', description: `${allOrders.length} orders have been exported.` });
-  
+
       } catch (error) {
         console.error("Export failed:", error);
         toast({ title: 'Export Failed', description: 'An error occurred while exporting orders.', variant: 'destructive' });
       } finally {
         setIsExporting(false);
       }
-    };  
+    };
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
   return (
@@ -256,6 +271,9 @@ const AdminOrders: React.FC = () => {
               {isExporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileDown className="w-4 h-4 mr-2" />}
               Export
             </Button>
+            <Button variant="default" onClick={() => setShowCreateOrderDialog(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Create Order
+            </Button>
           </div>
           {showFilters && (
             <div className="mt-4 pt-4 border-t space-y-4">
@@ -263,8 +281,15 @@ const AdminOrders: React.FC = () => {
                 <div><Label className="text-sm font-medium mb-1.5 block">Status</Label><Select value={filters.status} onValueChange={v => handleFilterChange('status', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label className="text-sm font-medium mb-1.5 block">Delivery</Label><Select value={filters.deliveryType} onValueChange={v => handleFilterChange('deliveryType', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label className="text-sm font-medium mb-1.5 block">Store</Label><Select value={filters.store} onValueChange={v => handleFilterChange('store', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="laghouat">Laghouat</SelectItem><SelectItem value="aflou">Aflou</SelectItem></SelectContent></Select></div>
-                <div><Label className="text-sm font-medium mb-1.5 block">From Date</Label><Input type="date" value={filters.fromDate} onChange={(e) => handleFilterChange('fromDate', e.target.value)} /></div>
-                <div><Label className="text-sm font-medium mb-1.5 block">To Date</Label><Input type="date" value={filters.toDate} onChange={(e) => handleFilterChange('toDate', e.target.value)} /></div>
+                <div className="flex flex-col gap-2"> {/* New div for DateRangePicker */}
+                    <Label className="text-sm font-medium mb-1.5 block">Date Range</Label>
+                    <DateRangePicker
+                        date={dateRange}
+                        onSelect={(range) => {
+                            setDateRange(range);
+                        }}
+                    />
+                </div>
               </div>
               {hasActiveFilters && <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={clearFilters}><X className="w-4 h-4 mr-1" />Clear Filters</Button></div>}
             </div>
@@ -306,8 +331,8 @@ const AdminOrders: React.FC = () => {
                 <tbody>
                   {isLoading ? (Array.from({ length: 10 }).map((_, i) => <tr key={i} className="border-b"><td colSpan={10} className="p-4"><Skeleton className="h-6 w-full" /></td></tr>))
                   : orders.map((order) => (
-                    <tr key={order.id} className="border-b hover:bg-muted/30">
-                      <td className="p-3"><Checkbox checked={selectedOrders.includes(order.id)} onCheckedChange={() => toggleOrderSelection(order.id)} /></td>
+                    <tr key={order.id} className={`border-b hover:bg-muted/30 cursor-pointer ${order.is_manual ? 'bg-red-800/30' : ''}`} onClick={() => setSelectedOrder(order)}>
+                      <td className="p-3" onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedOrders.includes(order.id)} onCheckedChange={() => toggleOrderSelection(order.id)} /></td>
                       <td className="p-3 font-mono text-xs">{order.order_number}</td>
                       <td className="p-3"><div><p className="font-medium">{order.customer_name}</p><p className="text-xs text-muted-foreground">{order.customer_phone}</p></div></td>
                       <td className="p-3"><div className="flex items-center gap-1.5">
@@ -318,9 +343,11 @@ const AdminOrders: React.FC = () => {
                       </div></td>
                       <td className="p-3 capitalize">{order.send_from_store}</td>
                       <td className="p-3 font-semibold">{order.total.toLocaleString()} DZD</td>
-                      <td className="p-3"><Select value={order.status} onValueChange={(v) => handleSingleStatusChange(order.id, v as OrderStatus)}><SelectTrigger className={`w-[120px] h-8 text-xs border-0 ${statusColors[order.status]}`}><SelectValue /></SelectTrigger><SelectContent>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></td>
+                      <td className="p-3"><Select value={order.status} onValueChange={(v) => handleSingleStatusChange(order.id, v as OrderStatus)} onClick={(e) => e.stopPropagation()}><SelectTrigger className={`w-[120px] h-8 text-xs border-0 ${statusColors[order.status]}`}><SelectValue /></SelectTrigger><SelectContent>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></td>
                       <td className="p-3 text-xs">{format(parseISO(order.created_at), 'dd/MM/yyyy HH:mm')}</td>
-                      <td className="p-3"><Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}><Eye className="w-4 h-4" /></Button></td>
+                      <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingOrder(order); setShowEditOrderDialog(true); }}><Edit className="w-4 h-4" /></Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -340,32 +367,306 @@ const AdminOrders: React.FC = () => {
       </PaginationContent></Pagination>}
 
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}><DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          {selectedOrder && <>
-            <DialogHeader><DialogTitle>Order Details - {selectedOrder.order_number}</DialogTitle></DialogHeader>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><Phone className="w-4 h-4" />Customer Information</h4><p>{selectedOrder.customer_name}</p><p className="text-muted-foreground">{selectedOrder.customer_phone}</p>{selectedOrder.customer_email && (<p className="text-muted-foreground">{selectedOrder.customer_email}</p>)}</div><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" />Delivery Information</h4><p>{selectedOrder.wilaya_name}</p>{selectedOrder.address && <p className="text-muted-foreground">{selectedOrder.address}</p>}<p className="text-sm">Type: {deliveryLabels[selectedOrder.delivery_type]}</p><p className="text-sm">Store: {selectedOrder.send_from_store.charAt(0).toUpperCase() + selectedOrder.send_from_store.slice(1)}</p></div></div>
-              <div><h4 className="font-semibold mb-3">Order Items</h4><div className="space-y-2">{selectedOrder.items.map((item, index) => (<div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">                      <div>
-                        <p className="font-medium">
-                          {(item.product_name_ar || item.product_name_fr || 'No Product Name Available')}
-                        </p>
-                        {item.weight && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Scale className="w-3 h-3" /> {item.weight}</p>
-                        )}
-                        {item.product_name_ar && item.product_name_fr && item.product_name_ar !== item.product_name_fr && (
-                          <p className="text-sm text-muted-foreground">{item.product_name_fr}</p>
-                        )}
-                      </div><div className="text-right"><p className="font-semibold">{item.total_price.toLocaleString()} DZD</p><p className="text-sm text-muted-foreground">{item.quantity} × {item.unit_price.toLocaleString()} DZD</p></div></div>))}</div></div>
-              <div className="border-t pt-4 space-y-2"><div className="flex justify-between"><span>Subtotal</span><span>{selectedOrder.subtotal.toLocaleString()} DZD</span></div><div className="flex justify-between"><span>Delivery</span><span>{selectedOrder.delivery_price.toLocaleString()} DZD</span></div><div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">{selectedOrder.total.toLocaleString()} DZD</span></div></div>
-              {selectedOrder.notes && (<div className="bg-muted/50 p-4 rounded-lg"><h4 className="font-semibold mb-2">Notes</h4><p className="text-sm">{selectedOrder.notes}</p></div>)}
-            </div>
-          </>}
+
+          {selectedOrder && (
+            <>
+              <DialogHeader><DialogTitle>Order Details - {selectedOrder.order_number}</DialogTitle></DialogHeader>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><Phone className="w-4 h-4" />Customer Information</h4><p>{selectedOrder.customer_name}</p><p className="text-muted-foreground">{selectedOrder.customer_phone}</p>{selectedOrder.customer_email && (<p className="text-muted-foreground">{selectedOrder.customer_email}</p>)}</div><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" />Delivery Information</h4><p>{selectedOrder.wilaya_name}</p>{selectedOrder.address && <p className="text-muted-foreground">{selectedOrder.address}</p>}<p className="text-sm">Type: {deliveryLabels[selectedOrder.delivery_type]}</p><p className="text-sm">Store: {selectedOrder.send_from_store.charAt(0).toUpperCase() + selectedOrder.send_from_store.slice(1)}</p></div></div>
+                <div><h4 className="font-semibold mb-3">Order Items</h4><div className="space-y-2">{selectedOrder.items.map((item, index) => (<div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">                      <div>
+                          <p className="font-medium">
+                            {(item.product_name_ar || item.product_name_fr || 'No Product Name Available')}
+                          </p>
+                          {item.weight && (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Scale className="w-3 h-3" /> {item.weight}</p>
+                          )}
+                          {item.product_name_ar && item.product_name_fr && item.product_name_ar !== item.product_name_fr && (
+                            <p className="text-sm text-muted-foreground">{item.product_name_fr}</p>
+                          )}
+                        </div><div className="text-right"><p className="font-semibold">{item.total_price.toLocaleString()} DZD</p><p className="text-sm text-muted-foreground">{item.quantity} × {item.unit_price.toLocaleString()} DZD</p></div></div>))}
+</div></div>
+                <div className="border-t pt-4 space-y-2"><div className="flex justify-between"><span>Subtotal</span><span>{selectedOrder.subtotal.toLocaleString()} DZD</span></div><div className="flex justify-between"><span>Delivery</span><span>{selectedOrder.delivery_price.toLocaleString()} DZD</span></div><div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">{selectedOrder.total.toLocaleString()} DZD</span></div></div>
+                {selectedOrder.notes && (<div className="bg-muted/50 p-4 rounded-lg"><h4 className="font-semibold mb-2">Notes</h4><p className="text-sm">{selectedOrder.notes}</p></div>)}
+              </div>
+            </>
+          )}
       </DialogContent></Dialog>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}><AlertDialogContent>
         <AlertDialogHeader><AlertDialogTitle>Delete Orders</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete {selectedOrders.length} order(s)? This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{bulkDelete.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent></AlertDialog>
+
+      <EditOrderDialog 
+        order={editingOrder} 
+        isOpen={showEditOrderDialog} 
+        onClose={() => { 
+          setShowEditOrderDialog(false); 
+          setEditingOrder(null); 
+        }} 
+      />
+
+      {showCreateOrderDialog && (
+        <CreateOrderDialog
+          isOpen={showCreateOrderDialog}
+          onClose={() => setShowCreateOrderDialog(false)}
+        />
+      )}
     </div>
+  );
+};
+
+interface EditOrderDialogProps {
+  order: OrderWithItems | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+
+const EditOrderDialog: React.FC<EditOrderDialogProps> = ({ order, isOpen, onClose }) => {
+  const [formData, setFormData] = useState<Partial<OrderWithItems>>({});
+  const updateOrder = useUpdateOrder();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (order) {
+      setFormData({
+        customer_name: order.customer_name,
+        customer_phone: order.customer_phone,
+        wilaya_name: order.wilaya_name,
+        address: order.address,
+        delivery_type: order.delivery_type,
+        send_from_store: order.send_from_store,
+        notes: order.notes,
+        total: order.total, // Keeping total for display, but it shouldn't be edited directly
+        subtotal: order.subtotal, // Keeping subtotal for display, not edited directly
+        delivery_price: order.delivery_price, // Keeping delivery_price for display
+      });
+    }
+  }, [order]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (!order || !order.id) return;
+
+    try {
+      // Filter out fields that shouldn't be updated or are display only
+      const { 
+        order_number, 
+        items, 
+        created_at, 
+        ...updatableData 
+      } = formData;
+
+      await updateOrder.mutateAsync({ id: order.id, data: updatableData });
+      toast({ title: 'Order Updated', description: `Order ${order.order_number} has been updated.` });
+      onClose();
+    } catch (error) {
+      console.error("Failed to update order:", error);
+      toast({ title: 'Update Failed', description: 'An error occurred while updating the order.', variant: 'destructive' });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit Order {order?.order_number}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="customer_name" className="text-right">Customer Name</Label>
+            <Input id="customer_name" name="customer_name" value={formData.customer_name || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="customer_phone" className="text-right">Customer Phone</Label>
+            <Input id="customer_phone" name="customer_phone" value={formData.customer_phone || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="wilaya_name" className="text-right">Wilaya</Label>
+            <Select name="wilaya_name" value={formData.wilaya_name || ''} onValueChange={(v) => handleSelectChange('wilaya_name', v)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select Wilaya" />
+              </SelectTrigger>
+              <SelectContent>
+                {algerianWilayas.map((wilaya) => (
+                  <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="address" className="text-right">Address</Label>
+            <Input id="address" name="address" value={formData.address || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="delivery_type" className="text-right">Delivery Type</Label>
+            <Select name="delivery_type" value={formData.delivery_type || ''} onValueChange={(v) => handleSelectChange('delivery_type', v)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select delivery type" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="send_from_store" className="text-right">Store</Label>
+            <Select name="send_from_store" value={formData.send_from_store || ''} onValueChange={(v) => handleSelectChange('send_from_store', v)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select store" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="laghouat">Laghouat</SelectItem>
+                <SelectItem value="aflou">Aflou</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="notes" className="text-right">Notes</Label>
+            <Input id="notes" name="notes" value={formData.notes || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+        </div>
+        <Button onClick={handleSubmit} disabled={updateOrder.isPending}>
+          {updateOrder.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save changes
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface CreateOrderDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState<Partial<OrderWithItems>>({
+    status: 'new', // Default status for new orders
+    delivery_type: 'home', // Default delivery type
+    send_from_store: 'laghouat', // Default store
+    total: 0,
+    subtotal: 0,
+    delivery_price: 0,
+    is_manual: true, // Mark as manual
+  });
+  const createOrder = useCreateOrder(); // This hook needs to be created
+  const { toast } = useToast();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // Basic validation
+      if (!formData.customer_name || !formData.customer_phone || !formData.wilaya_name || 
+          (formData.delivery_type === 'home' && !formData.address)
+      ) {
+        toast({ title: 'Validation Error', description: 'Please fill in all required fields.', variant: 'destructive' });
+        return;
+      }
+
+      await createOrder.mutateAsync(formData);
+      toast({ title: 'Order Created', description: `New order for ${formData.customer_name} created successfully.` });
+      onClose();
+    } catch (error) {
+      console.error("Failed to create order:", error);
+      toast({ title: 'Creation Failed', description: 'An error occurred while creating the order.', variant: 'destructive' });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Order</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="customer_name" className="text-right">Customer Name</Label>
+            <Input id="customer_name" name="customer_name" value={formData.customer_name || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="customer_phone" className="text-right">Customer Phone</Label>
+            <Input id="customer_phone" name="customer_phone" value={formData.customer_phone || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="wilaya_name" className="text-right">Wilaya</Label>
+            <Select name="wilaya" value={formData.wilaya_name || ''} onValueChange={(selectedValue) => {
+              const selectedWilaya = algerianWilayas.find(w => w.name === selectedValue);
+              if (selectedWilaya) {
+                setFormData(prev => ({
+                  ...prev,
+                  wilaya_name: selectedWilaya.name,
+                  wilaya_code: selectedWilaya.code
+                }));
+              }
+            }}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select Wilaya" />
+              </SelectTrigger>
+              <SelectContent>
+                {algerianWilayas.map((wilaya) => (
+                  <SelectItem key={wilaya.code} value={wilaya.name}>{wilaya.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {formData.delivery_type === 'home' && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="address" className="text-right">Address</Label>
+              <Input id="address" name="address" value={formData.address || ''} onChange={handleChange} className="col-span-3" />
+            </div>
+          )}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="delivery_type" className="text-right">Delivery Type</Label>
+            <Select name="delivery_type" value={formData.delivery_type || ''} onValueChange={(v) => handleSelectChange('delivery_type', v)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select delivery type" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="send_from_store" className="text-right">Store</Label>
+            <Select name="send_from_store" value={formData.send_from_store || ''} onValueChange={(v) => handleSelectChange('send_from_store', v)}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select store" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="laghouat">Laghouat</SelectItem>
+                <SelectItem value="aflou">Aflou</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="notes" className="text-right">Notes</Label>
+            <Input id="notes" name="notes" value={formData.notes || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+        </div>
+        <Button onClick={handleSubmit} disabled={createOrder.isPending}>
+          {createOrder.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Create Order
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 };
 

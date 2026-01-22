@@ -31,10 +31,10 @@ const OrderCard: React.FC<OrderCardProps> = ({
   deliveryLabels,
 }) => {
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4 space-y-3">
+    <Card className={`mb-4 ${order.is_manual ? 'bg-red-50/50' : ''}`}>
+      <CardContent className="p-4 space-y-3 cursor-pointer" onClick={() => onViewDetails(order)}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <Checkbox checked={isSelected} onCheckedChange={() => onSelect(order.id)} />
             <span className="font-mono text-sm font-semibold">#{order.order_number}</span>
           </div>
@@ -71,7 +71,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
         </div>
 
         <div className="flex justify-between items-center pt-3 border-t">
-          <Select value={order.status} onValueChange={(v) => onStatusChange(order.id, v as OrderStatus)}>
+          <Select value={order.status} onValueChange={(v) => onStatusChange(order.id, v as OrderStatus)} onClick={(e) => e.stopPropagation()}>
             <SelectTrigger className={`w-[120px] h-8 text-xs border ${statusColors[order.status]}`}>
               <SelectValue />
             </SelectTrigger>
@@ -79,9 +79,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
               {Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => onViewDetails(order)}>
-            <Eye className="w-4 h-4 mr-1" /> Details
-          </Button>
+
         </div>
       </CardContent>
     </Card>

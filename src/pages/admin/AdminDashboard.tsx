@@ -2,16 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { 
-  ShoppingCart, 
-  DollarSign, 
-  TrendingUp, 
+import { DateRangePicker } from '@/components/ui/date-range-picker'; // New import
+import { DateRange } from 'react-day-picker'; // New import
+import {
+  ShoppingCart,
+  DollarSign,
+  TrendingUp,
   Truck,
   Package as PackageIcon,
   Calendar as CalendarIcon,
@@ -35,7 +37,7 @@ import {
   LabelList,
 } from 'recharts';
 
-type TimeRange = 'day' | '7d' | 'month';
+type TimeRange = '7d' | 'month' | 'custom'; // Updated TimeRange
 
 const CHART_COLORS = {
   primary: 'hsl(220, 70%, 50%)',
@@ -48,20 +50,38 @@ const CHART_COLORS = {
 const AdminDashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ // New state for custom range
+    from: new Date(),
+    to: new Date(),
+  });
 
   const { from, to } = useMemo(() => {
     const now = new Date();
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+
     switch (timeRange) {
-      case 'day':
-        return { from: startOfDay(date || now), to: endOfDay(date || now) };
       case '7d':
-        return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
+        startDate = subDays(now, 6);
+        endDate = now;
+        return { from: startOfDay(startDate), to: endOfDay(endDate) };
       case 'month':
-        return { from: startOfMonth(now), to: endOfMonth(now) };
+        startDate = startOfMonth(now);
+        endDate = endOfMonth(now);
+        return { from: startOfDay(startDate), to: endOfDay(endDate) };
+      case 'custom': // Handle custom range
+        startDate = dateRange?.from;
+        endDate = dateRange?.to;
+        return {
+          from: startDate ? startOfDay(startDate) : undefined,
+          to: endDate ? endOfDay(endDate) : undefined
+        };
       default:
-        return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
+        startDate = subDays(now, 6);
+        endDate = now;
+        return { from: startOfDay(startDate), to: endOfDay(endDate) };
     }
-  }, [timeRange, date]);
+  }, [timeRange, dateRange]); // Added dateRange to dependencies
 
   const { data: filteredOrders = [], isLoading: ordersLoading } = useOrdersByDateRange(from, to);
   const { data: products = [], isLoading: productsLoading } = useProducts();
@@ -135,66 +155,38 @@ const AdminDashboard: React.FC = () => {
     // Chart data for revenue and orders over time
   
     const timeChartData = useMemo(() => {
-  
       const validOrders = filteredOrders.filter(o => o.status !== 'canceled');
   
-      
-  
-      if (timeRange === 'day') {
-  
-        // Aggregate by hour
-  
+      if (from && to && isSameDay(from, to)) { // Aggregate by hour for a single day (could be from custom range)
         const hourlyData = Array.from({ length: 24 }, (_, i) => ({
-  
           label: `${String(i).padStart(2, '0')}:00`,
-  
           orders: 0,
-  
           revenue: 0,
-  
         }));
   
-  
-  
         validOrders.forEach(order => {
-  
-          const hour = getHours(parseISO(order.created_at));
-  
-          hourlyData[hour].orders += 1;
-  
-          hourlyData[hour].revenue += Number(order.total);
-  
+          const orderDate = parseISO(order.created_at);
+          if (isSameDay(orderDate, from)) { // Check against the single selected day
+            const hour = getHours(orderDate);
+            hourlyData[hour].orders += 1;
+            hourlyData[hour].revenue += Number(order.total);
+          }
         });
-  
         return hourlyData;
-  
-  
-  
-      } else {
-  
-        // Aggregate by day
-  
+      } else if (from && to) { // Aggregate by day for ranges
         const days = eachDayOfInterval({ start: from, end: to });
-  
         return days.map(day => {
-  
           const dayOrders = validOrders.filter(o => isSameDay(parseISO(o.created_at), day));
-  
           return {
-  
             label: format(day, 'MMM dd'),
-  
             orders: dayOrders.length,
-  
             revenue: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
-  
           };
-  
         });
-  
       }
+      return []; // Return empty array if no valid data or range
   
-    }, [filteredOrders, timeRange, from, to]);
+    }, [filteredOrders, from, to]); // Added date to dependencies
   
   
   
@@ -231,11 +223,13 @@ const AdminDashboard: React.FC = () => {
   
   
     const formatIntervalLabel = () => {
-  
-      if (timeRange === 'day') return format(date || new Date(), 'MMMM dd, yyyy');
-  
-      return `${format(from, 'MMM dd, yyyy')} - ${format(to, 'MMM dd, yyyy')}`;
-  
+      if (dateRange?.from && dateRange?.to) {
+        if (isSameDay(dateRange.from, dateRange.to)) {
+          return format(dateRange.from, 'MMMM dd, yyyy');
+        }
+        return `${format(dateRange.from, 'MMM dd, yyyy')} - ${format(dateRange.to, 'MMM dd, yyyy')}`;
+      }
+      return 'Select a date range';
     };
   
   
@@ -264,83 +258,83 @@ const AdminDashboard: React.FC = () => {
   
             <div className="inline-flex items-center rounded-lg border border-border bg-card p-1 gap-1">
   
-              <Button
+                            <Button
   
-                size="sm"
+                              size="sm"
   
-                variant={timeRange === '7d' ? 'default' : 'ghost'}
+                              variant={timeRange === '7d' ? 'default' : 'ghost'}
   
-                onClick={() => setTimeRange('7d')}
+                              onClick={() => { setTimeRange('7d'); setDateRange(undefined); }}
   
-                className="text-sm px-4"
+                              className="text-sm px-4"
   
-              >
+                            >
   
-                7 Days
+                              7 Days
   
-              </Button>
+                            </Button>
   
-              <Button
+                            <Button
   
-                size="sm"
+                              size="sm"
   
-                variant={timeRange === 'month' ? 'default' : 'ghost'}
+                              variant={timeRange === 'month' ? 'default' : 'ghost'}
   
-                onClick={() => setTimeRange('month')}
+                              onClick={() => { setTimeRange('month'); setDateRange(undefined); }}
   
-                className="text-sm px-4"
+                              className="text-sm px-4"
   
-              >
+                            >
   
-                Month
+                              Month
   
-              </Button>
+                            </Button>
+  
+                            <Button
+  
+                              size="sm"
+  
+                              variant={timeRange === 'custom' ? 'default' : 'ghost'}
+  
+                              onClick={() => { setTimeRange('custom'); setDate(undefined); }}
+  
+                              className="text-sm px-4"
+  
+                            >
+  
+                              Custom Range
+  
+                            </Button>
   
             </div>
   
-            <Popover>
+                        {timeRange === 'custom' && ( // Render DateRangePicker for custom range
   
-              <PopoverTrigger asChild>
+                          <DateRangePicker
   
-                <Button
+                            date={dateRange}
   
-                  variant={timeRange === 'day' ? 'default' : 'outline'}
+                            onSelect={(range) => {
   
-                  className="w-[280px] justify-start text-left font-normal"
+                              setDateRange(range);
   
-                >
+                              if (range?.from && range?.to) {
   
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                setTimeRange('custom');
   
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                              } else if (range?.from && !range.to) { // Handle single date selection
   
-                </Button>
+                                setDateRange({ from: range.from, to: range.from });
   
-              </PopoverTrigger>
+                                setTimeRange('custom');
   
-              <PopoverContent className="w-auto p-0">
+                              }
   
-                <Calendar
+                            }}
   
-                  mode="single"
+                          />
   
-                  selected={date}
-  
-                  onSelect={(newDate) => {
-  
-                    setDate(newDate);
-  
-                    setTimeRange('day');
-  
-                  }}
-  
-                  initialFocus
-  
-                />
-  
-              </PopoverContent>
-  
-            </Popover>
+                        )}
   
           </div>
   
@@ -430,33 +424,33 @@ const AdminDashboard: React.FC = () => {
   
                   </defs>
   
-                  <XAxis 
+                  <XAxis
   
-                    dataKey="label" 
+                    dataKey="label"
   
-                    axisLine={false} 
+                    axisLine={false}
   
-                    tickLine={false} 
-  
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-  
-                  />
-  
-                  <YAxis 
-  
-                    axisLine={false} 
-  
-                    tickLine={false} 
+                    tickLine={false}
   
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
   
                   />
   
-                  <Tooltip 
+                  <YAxis
   
-                    contentStyle={{ 
+                    axisLine={false}
   
-                      backgroundColor: 'hsl(var(--card))', 
+                    tickLine={false}
+  
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+  
+                  />
+  
+                  <Tooltip
+  
+                    contentStyle={{
+  
+                      backgroundColor: 'hsl(var(--card))',
   
                       border: '1px solid hsl(var(--border))',
   
@@ -468,19 +462,19 @@ const AdminDashboard: React.FC = () => {
   
                   />
   
-                  <Area 
+                  <Area
   
-                    type="monotone" 
+                    type="monotone"
   
-                    dataKey="orders" 
+                    dataKey="orders"
   
-                    stroke={CHART_COLORS.primary} 
+                    stroke={CHART_COLORS.primary}
   
                     strokeWidth={2}
   
-                    fillOpacity={1} 
+                    fillOpacity={1}
   
-                    fill="url(#colorOrders)" 
+                    fill="url(#colorOrders)"
   
                   />
   
@@ -518,23 +512,23 @@ const AdminDashboard: React.FC = () => {
   
                   </defs>
   
-                  <XAxis 
+                  <XAxis
   
-                    dataKey="label" 
+                    dataKey="label"
   
-                    axisLine={false} 
+                    axisLine={false}
   
-                    tickLine={false} 
+                    tickLine={false}
   
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
   
                   />
   
-                  <YAxis 
+                  <YAxis
   
-                    axisLine={false} 
+                    axisLine={false}
   
-                    tickLine={false} 
+                    tickLine={false}
   
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
   
@@ -542,13 +536,13 @@ const AdminDashboard: React.FC = () => {
   
                   />
   
-                  <Tooltip 
+                  <Tooltip
   
                     formatter={(value: number) => [`${value.toLocaleString()} DZD`, 'Revenue']}
   
-                    contentStyle={{ 
+                    contentStyle={{
   
-                      backgroundColor: 'hsl(var(--card))', 
+                      backgroundColor: 'hsl(var(--card))',
   
                       border: '1px solid hsl(var(--border))',
   
@@ -560,19 +554,19 @@ const AdminDashboard: React.FC = () => {
   
                   />
   
-                  <Area 
+                  <Area
   
-                    type="monotone" 
+                    type="monotone"
   
-                    dataKey="revenue" 
+                    dataKey="revenue"
   
-                    stroke={CHART_COLORS.secondary} 
+                    stroke={CHART_COLORS.secondary}
   
                     strokeWidth={2}
   
-                    fillOpacity={1} 
+                    fillOpacity={1}
   
-                    fill="url(#colorRevenue)" 
+                    fill="url(#colorRevenue)"
   
                   />
   
@@ -632,11 +626,11 @@ const AdminDashboard: React.FC = () => {
   
                     </Pie>
   
-                    <Tooltip 
+                    <Tooltip
   
-                      contentStyle={{ 
+                      contentStyle={{
   
-                        backgroundColor: 'hsl(var(--card))', 
+                        backgroundColor: 'hsl(var(--card))',
   
                         border: '1px solid hsl(var(--border))',
   
@@ -716,11 +710,11 @@ const AdminDashboard: React.FC = () => {
   
                     </Pie>
   
-                    <Tooltip 
+                    <Tooltip
   
-                      contentStyle={{ 
+                      contentStyle={{
   
-                        backgroundColor: 'hsl(var(--card))', 
+                        backgroundColor: 'hsl(var(--card))',
   
                         border: '1px solid hsl(var(--border))',
   
