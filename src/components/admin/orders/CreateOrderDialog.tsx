@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { algerianWilayas } from '@/data/adminData';
 import { Loader2, Save, X, Trash2, PlusCircle } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useCheapestDelivery } from '@/hooks/useTariffs';
 
 interface CreateOrderDialogProps {
   isOpen: boolean;
@@ -168,12 +169,17 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
   const { data: productsData } = useProducts({ pageSize: 1000 }); // Fetch all products for matching
   const products = productsData?.data || [];
 
+  const { data: deliveryPriceData, isLoading: isDeliveryPriceLoading } = useCheapestDelivery(
+    formData.wilaya_code,
+    formData.delivery_type as 'home' | 'bureau' | 'pickup'
+  );
+
   useEffect(() => {
     const subtotal = items.reduce((acc, item) => acc + (item.total_price || 0), 0);
-    const delivery_price = 0; // Or calculate based on wilaya
-    const total = subtotal + delivery_price;
-    setFormData(prev => ({ ...prev, subtotal, delivery_price, total }));
-  }, [items]);
+    const calculatedDeliveryPrice = deliveryPriceData?.price ?? 0;
+    const total = subtotal + calculatedDeliveryPrice;
+    setFormData(prev => ({ ...prev, subtotal, delivery_price: calculatedDeliveryPrice, total }));
+  }, [items, deliveryPriceData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -181,7 +187,18 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'wilaya_name') {
+        const selectedWilaya = algerianWilayas.find(w => w.name === value);
+        if (selectedWilaya) {
+            setFormData(prev => ({
+                ...prev,
+                wilaya_name: selectedWilaya.name,
+                wilaya_code: selectedWilaya.code,
+            }));
+        }
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const addProductToOrder = (product: Product, quantity: number, weightId?: string) => {
@@ -290,16 +307,7 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="wilaya_name">Wilaya</Label>
-                    <Select name="wilaya_name" value={formData.wilaya_name || ''} onValueChange={(selectedValue) => {
-                        const selectedWilaya = algerianWilayas.find(w => w.name === selectedValue);
-                        if (selectedWilaya) {
-                            setFormData(prev => ({
-                                ...prev,
-                                wilaya_name: selectedWilaya.name,
-                                wilaya_code: selectedWilaya.code,
-                            }));
-                        }
-                    }}>
+                    <Select name="wilaya_name" value={formData.wilaya_name || ''} onValueChange={(selectedValue) => handleSelectChange('wilaya_name', selectedValue)}>
                         <SelectTrigger><SelectValue placeholder="Select Wilaya" /></SelectTrigger>
                         <SelectContent>
                             {algerianWilayas.map((wilaya) => (
@@ -377,14 +385,14 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
                 {items.length > 0 && (
                     <div className="pt-4 border-t space-y-2">
                         <div className="flex justify-between"><span>Subtotal</span><span>{formData.subtotal?.toLocaleString()} DZD</span></div>
-                        <div className="flex justify-between"><span>Delivery</span><span>{formData.delivery_price?.toLocaleString()} DZD</span></div>
-                        <div className="flex justify-between font-bold text-lg"><span>Total</span><span>{formData.total?.toLocaleString()} DZD</span></div>
+                        <div className="flex justify-between"><span>Delivery</span><span>{isDeliveryPriceLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : `${formData.delivery_price?.toLocaleString()} DZD`}</span></div>
+                        <div className="flex justify-between font-bold text-lg"><span>Total</span><span>{isDeliveryPriceLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : `${formData.total?.toLocaleString()} DZD`}</span></div>
                     </div>
                 )}
             </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={createOrder.isPending} className="w-full md:w-auto">
+          <Button onClick={handleSubmit} disabled={createOrder.isPending || isDeliveryPriceLoading} className="w-full md:w-auto">
             {createOrder.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             Create Order
           </Button>
