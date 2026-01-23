@@ -278,6 +278,7 @@ export type Database = {
           wilaya_code: number
           wilaya_name: string
           is_active: boolean | null
+          retour: number
         }
         Insert: {
           bureau_price?: number
@@ -289,6 +290,7 @@ export type Database = {
           wilaya_code: number
           wilaya_name: string
           is_active?: boolean | null
+          retour?: number
         }
         Update: {
           bureau_price?: number
@@ -300,6 +302,7 @@ export type Database = {
           wilaya_code?: number
           wilaya_name?: string
           is_active?: boolean | null
+          retour?: number
         }
         Relationships: []
       }
@@ -347,7 +350,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       delivery_type: "home" | "bureau" | "pickup"
-      order_status: "new" | "confirmed" | "delivered" | "canceled"
+      order_status: "new" | "confirmed" | "delivered" | "canceled" | "returned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -477,7 +480,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       delivery_type: ["home", "bureau", "pickup"],
-      order_status: ["new", "confirmed", "delivered", "canceled"],
+      order_status: ["new", "confirmed", "delivered", "canceled", "returned"],
     },
   },
 } as const

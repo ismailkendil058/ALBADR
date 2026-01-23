@@ -55,11 +55,11 @@ import CreateOrderDialog from '@/components/admin/orders/CreateOrderDialog';
 const PAGE_SIZE = 20;
 
 const statusLabels: Record<OrderStatus, string> = {
-  new: 'New', confirmed: 'Confirmed', delivered: 'Delivered', canceled: 'Canceled',
+  new: 'New', confirmed: 'Confirmed', delivered: 'Delivered', canceled: 'Canceled', returned: 'Returned',
 };
 const statusColors: Record<OrderStatus, string> = {
   new: 'bg-amber-100 text-amber-800', confirmed: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800', canceled: 'bg-red-100 text-red-800',
+  delivered: 'bg-green-100 text-green-800', canceled: 'bg-red-100 text-red-800', returned: 'bg-purple-100 text-purple-800',
 };
 const deliveryLabels = { home: 'Home Delivery', bureau: 'Bureau', pickup: 'Pickup' };
 

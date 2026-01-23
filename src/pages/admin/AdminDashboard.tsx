@@ -94,7 +94,12 @@ const AdminDashboard: React.FC = () => {
   
       const totalOrders = filteredOrders.length;
   
-      const totalRevenue = validOrders.reduce((sum, o) => sum + Number(o.total), 0);
+      const totalRevenue = validOrders.reduce((sum, o) => {
+        if (o.status === 'returned') {
+          return sum - Number(o.tariff_retour_price || 0); // Only subtract retour price
+        }
+        return sum + Number(o.subtotal); // Add subtotal for non-returned orders
+      }, 0);
   
       const averageOrderValue = validOrders.length > 0 ? Math.round(totalRevenue / validOrders.length) : 0;
   
@@ -169,8 +174,7 @@ const AdminDashboard: React.FC = () => {
           if (isSameDay(orderDate, from)) { // Check against the single selected day
             const hour = getHours(orderDate);
             hourlyData[hour].orders += 1;
-            hourlyData[hour].revenue += Number(order.total);
-          }
+                          hourlyData[hour].revenue += (order.status === 'returned' ? -Number(order.tariff_retour_price || 0) : Number(order.subtotal));          }
         });
         return hourlyData;
       } else if (from && to) { // Aggregate by day for ranges
@@ -180,7 +184,7 @@ const AdminDashboard: React.FC = () => {
           return {
             label: format(day, 'MMM dd'),
             orders: dayOrders.length,
-            revenue: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
+            revenue: dayOrders.reduce((sum, o) => sum + (o.status === 'returned' ? -Number(o.tariff_retour_price || 0) : Number(o.subtotal)), 0),
           };
         });
       }

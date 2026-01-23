@@ -7,7 +7,7 @@ export type OrderItem = Tables<'order_items'>;
 export type OrderStatus = Enums<'order_status'>;
 export type DeliveryType = Enums<'delivery_type'>;
 
-export type OrderWithItems = Tables<'orders'> & { items: OrderItem[]; is_manual?: boolean; };
+export type OrderWithItems = Tables<'orders'> & { items: OrderItem[]; is_manual?: boolean; tariff_retour_price?: number; };
 
 export function useOrders({ 
   page, 
@@ -167,7 +167,7 @@ export function useOrdersByDateRange(from: Date, to: Date) {
   return useQuery({
     queryKey: ['orders', { from, to }],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
           *,
@@ -177,8 +177,41 @@ export function useOrdersByDateRange(from: Date, to: Date) {
         .lte('created_at', to.toISOString())
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data as OrderWithItems[];
+      if (ordersError) throw ordersError;
+
+      // Extract unique wilaya_code and store combinations from orders
+      const uniqueTariffKeys = new Set(
+        ordersData.map(order => `${order.wilaya_code}-${order.send_from_store}`)
+      );
+
+      // Fetch tariffs for these combinations
+      const tariffPromises = Array.from(uniqueTariffKeys).map(key => {
+        const [wilaya_code, store] = key.split('-');
+        return supabase
+          .from('tariffs')
+          .select('retour') // Changed from 'return_price' to 'retour'
+          .eq('wilaya_code', parseInt(wilaya_code))
+          .eq('store', store)
+          .maybeSingle();
+      });
+
+      const tariffResults = await Promise.all(tariffPromises);
+
+      // Create a map for quick lookup of retour
+      const tariffMap = new Map<string, number>(
+        tariffResults.map((result, index) => {
+          const key = Array.from(uniqueTariffKeys)[index];
+          return [key, result.data?.retour || 0]; // Changed from 'return_price' to 'retour'
+        })
+      );
+
+      // Merge retour into each order
+      const ordersWithRetourPrice = ordersData.map(order => ({
+        ...order,
+        tariff_retour_price: tariffMap.get(`${order.wilaya_code}-${order.send_from_store}`) || 0, // Changed from 'tariff_return_price' to 'tariff_retour_price'
+      }));
+
+      return ordersWithRetourPrice as OrderWithItems[];
     },
   });
 }
