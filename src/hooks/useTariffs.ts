@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Tables, TablesUpdate } from '@/integrations/supabase/types';
+import { Tables, TablesUpdate, TablesInsert } from '@/integrations/supabase/types';
 
 export type Tariff = Tables<'tariffs'>;
 
@@ -68,6 +68,78 @@ export function useBulkUpdateTariffs() {
         if (error) throw error;
       }
       return updates.length;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tariffs'] });
+    },
+  });
+}
+
+export function useBulkImportTariffs() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (importedTariffs: {
+      wilaya_code: number;
+      wilaya_name: string;
+      home_price: number;
+      bureau_price: number;
+      retour: number;
+      store: 'laghouat' | 'aflou';
+    }[]) => {
+      const { data: existingTariffs, error: fetchError } = await supabase
+        .from('tariffs')
+        .select('id, wilaya_code, store'); // Only need these fields to identify existing tariffs
+
+      if (fetchError) throw fetchError;
+
+      const results = {
+        successfulInserts: 0,
+        successfulUpdates: 0,
+        failedImports: [] as { tariff: any; error: string }[],
+      };
+
+      for (const importedTariff of importedTariffs) {
+        const existingTariff = existingTariffs.find(
+          t => t.wilaya_code === importedTariff.wilaya_code && t.store === importedTariff.store
+        );
+
+        const payload: TablesInsert<'tariffs'> | TablesUpdate<'tariffs'> = {
+          wilaya_code: importedTariff.wilaya_code,
+          wilaya_name: importedTariff.wilaya_name,
+          home_price: importedTariff.home_price,
+          bureau_price: importedTariff.bureau_price,
+          retour: importedTariff.retour,
+          store: importedTariff.store,
+        };
+
+        let operationError = null;
+        if (existingTariff) {
+          // Update existing tariff
+          const { error } = await supabase
+            .from('tariffs')
+            .update(payload)
+            .eq('id', existingTariff.id);
+          operationError = error;
+          if (!error) {
+            results.successfulUpdates++;
+          }
+        } else {
+          // Insert new tariff
+          const { error } = await supabase
+            .from('tariffs')
+            .insert(payload);
+          operationError = error;
+          if (!error) {
+            results.successfulInserts++;
+          }
+        }
+
+        if (operationError) {
+          results.failedImports.push({ tariff: importedTariff, error: operationError.message });
+        }
+      }
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tariffs'] });

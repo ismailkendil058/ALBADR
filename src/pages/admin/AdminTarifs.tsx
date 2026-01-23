@@ -2,28 +2,25 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label'; // Added Label import
 
 
-import { Save, Search, Store, Loader2 } from 'lucide-react';
+import { Save, Search, Store, Loader2, Upload } from 'lucide-react'; // Added Upload icon
 import { useToast } from '@/hooks/use-toast';
-import { useTariffs, useBulkUpdateTariffs, Tariff } from '@/hooks/useTariffs';
+import { useTariffs, useBulkUpdateTariffs, useBulkImportTariffs, Tariff } from '@/hooks/useTariffs';
 
 import { UseMutationResult } from '@tanstack/react-query'; // Import UseMutationResult
 
-interface TariffTableProps {
-  tariffs: Tariff[];
-  search: string;
-  setSearch: (s: string) => void;
+import * as XLSX from 'xlsx'; // Import xlsx library
+import { saveAs } from 'file-saver'; // Import file-saver
+
+interface ImportedTariffData {
+  wilaya_code: number;
+  wilaya_name: string;
+  home_price: number;
+  bureau_price: number;
+  retour: number;
   store: 'laghouat' | 'aflou';
-  storeName: string;
-  storeColor: string;
-  saveTariffs: () => Promise<void>;
-  bulkUpdate: UseMutationResult<any, Error, { id: string; home_price: number; bureau_price: number; retour: number }[], unknown>;
-  getLocalValue: (tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour') => string;
-  updateLocalPrice: (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour', value: string) => void;
-  updateLocalIsActive: (tariffId: string, tariff: Tariff, value: boolean) => void;
-  getLocalIsActive: (tariff: Tariff) => boolean;
-  hasChanges: boolean;
 }
 
 const TariffTable: React.FC<TariffTableProps> = ({
@@ -77,7 +74,7 @@ const TariffTable: React.FC<TariffTableProps> = ({
         <table className="w-full table-fixed">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="w-2/6 text-left py-3 px-2 font-medium">Wilaya</th>
+              <th className="w-2/6 text-center py-3 px-2 font-medium">Wilaya</th>
               <th className="w-1/6 text-center py-3 px-2 font-medium">Home</th>
               <th className="w-1/6 text-center py-3 px-2 font-medium">Bureau</th>
               <th className="w-1/6 text-center py-3 px-2 font-medium">Return</th>
@@ -87,10 +84,10 @@ const TariffTable: React.FC<TariffTableProps> = ({
           <tbody>
             {tariffs.map((tariff, index) => (
               <tr key={tariff.id} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
-                <td className="py-2 px-2 font-medium" dir="rtl">
+                <td className="py-2 px-2 font-medium text-center">
                   {tariff.wilaya_code} - {tariff.wilaya_name}
                 </td>
-                <td className="py-2 px-2">
+                <td className="py-2 px-2 text-center">
                   <Input
                     type="text"
                     pattern="[0-9]*"
@@ -101,7 +98,7 @@ const TariffTable: React.FC<TariffTableProps> = ({
                     className="w-full mx-auto text-center"
                   />
                 </td>
-                <td className="py-2 px-2">
+                <td className="py-2 px-2 text-center">
                   <Input
                     type="text"
                     pattern="[0-9]*"
@@ -112,7 +109,7 @@ const TariffTable: React.FC<TariffTableProps> = ({
                     className="w-full mx-auto text-center"
                   />
                 </td>
-                <td className="py-2 px-2">
+                <td className="py-2 px-2 text-center">
                   <Input
                     type="text"
                     pattern="[0-9]*"
@@ -143,12 +140,15 @@ const TariffTable: React.FC<TariffTableProps> = ({
 const AdminTarifs: React.FC = () => {
   const { data: allTariffs = [], isLoading } = useTariffs();
   const bulkUpdate = useBulkUpdateTariffs();
+  const bulkImport = useBulkImportTariffs(); // Use the new hook
   const { toast } = useToast();
 
   const [searchLaghouat, setSearchLaghouat] = useState('');
   const [searchAflou, setSearchAflou] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
-  
+  const [file, setFile] = useState<File | null>(null); // State for uploaded file
+  const [parsedData, setParsedData] = useState<ImportedTariffData[]>([]); // State for parsed data, now typed
+
   // Local state for editing
   const [localTariffs, setLocalTariffs] = useState<Record<string, { home_price?: string | number; bureau_price?: string | number; retour?: string | number; is_active?: boolean }>>({});
 
@@ -265,6 +265,196 @@ const AdminTarifs: React.FC = () => {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const headers = ['wilaya_code', 'wilaya_name', 'home_price', 'bureau_price', 'retour', 'store'];
+    const data = [
+      headers,
+      // Example row
+      ['16', 'Algiers', '300', '250', '50', 'laghouat'],
+      ['16', 'Algiers', '350', '300', '60', 'aflou'],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Tariffs');
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const dataBlob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(dataBlob, 'tariffs_template.xlsx');
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFile = event.target.files?.[0];
+    if (!uploadedFile) {
+      setFile(null);
+      setParsedData([]);
+      return;
+    }
+
+    setFile(uploadedFile);
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const binaryStr = e.target?.result;
+        const workbook = XLSX.read(binaryStr, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+        const validatedData: ImportedTariffData[] = [];
+        const errors: string[] = [];
+
+        json.forEach((row, index) => {
+          const rowNum = index + 2; // +1 for 0-indexed, +1 for header row (excel row numbers)
+          const newTariff: Partial<ImportedTariffData> = {};
+          let isValidRow = true;
+
+          // Validate wilaya_code
+          if (typeof row.wilaya_code === 'number' && !isNaN(row.wilaya_code)) {
+            newTariff.wilaya_code = row.wilaya_code;
+          } else {
+            errors.push(`Row ${rowNum}: 'wilaya_code' is missing or invalid.`);
+            isValidRow = false;
+          }
+
+          // Validate wilaya_name
+          if (typeof row.wilaya_name === 'string' && row.wilaya_name.trim() !== '') {
+            newTariff.wilaya_name = row.wilaya_name.trim();
+          } else {
+            errors.push(`Row ${rowNum}: 'wilaya_name' is missing or invalid.`);
+            isValidRow = false;
+          }
+
+          // Validate home_price, bureau_price, retour
+          ['home_price', 'bureau_price', 'retour'].forEach(field => {
+            const value = parseFloat(row[field]);
+            if (!isNaN(value) && value >= 0) {
+              (newTariff as any)[field] = value;
+            } else {
+              errors.push(`Row ${rowNum}: '${field}' is missing or invalid (must be a non-negative number).`);
+              isValidRow = false;
+            }
+          });
+
+          // Validate store
+          if (typeof row.store === 'string' && ['laghouat', 'aflou'].includes(row.store.toLowerCase())) {
+            newTariff.store = row.store.toLowerCase() as 'laghouat' | 'aflou';
+          } else {
+            errors.push(`Row ${rowNum}: 'store' is missing or invalid (must be 'laghouat' or 'aflou').`);
+            isValidRow = false;
+          }
+
+          if (isValidRow) {
+            validatedData.push(newTariff as ImportedTariffData);
+          }
+        });
+
+        setParsedData(validatedData);
+
+        if (errors.length > 0) {
+          toast({
+            title: 'File Uploaded with Warnings/Errors',
+            description: (
+              <div>
+                <p>{uploadedFile.name} parsed. Some rows have issues:</p>
+                <ul className="list-disc pl-5">
+                  {errors.slice(0, 5).map((err, i) => <li key={i}>{err}</li>)}
+                  {errors.length > 5 && <li>And {errors.length - 5} more errors...</li>}
+                </ul>
+              </div>
+            ),
+            variant: 'destructive',
+            duration: 9000,
+          });
+        } else {
+          toast({
+            title: 'File Uploaded Successfully',
+            description: `${uploadedFile.name} parsed. ${validatedData.length} valid rows found.`,
+          });
+        }
+
+      } catch (error: any) {
+        toast({
+          title: 'Error reading file',
+          description: error.message || 'Could not parse the uploaded file. Ensure it\'s a valid CSV/Excel format.',
+          variant: 'destructive',
+          duration: 9000,
+        });
+        setFile(null);
+        setParsedData([]);
+      }
+    };
+
+    reader.onerror = () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to read file.',
+        variant: 'destructive',
+      });
+      setFile(null);
+      setParsedData([]);
+    };
+
+    reader.readAsBinaryString(uploadedFile);
+  };
+
+  const handleBulkImport = async () => {
+    if (parsedData.length === 0) {
+      toast({
+        title: 'No data to import',
+        description: 'Please upload a valid file with tariff data.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const results = await bulkImport.mutateAsync(parsedData);
+      
+      let description = '';
+      if (results.successfulInserts > 0) {
+        description += `${results.successfulInserts} new tariffs inserted. `;
+      }
+      if (results.successfulUpdates > 0) {
+        description += `${results.successfulUpdates} existing tariffs updated. `;
+      }
+      if (results.failedImports.length > 0) {
+        description += `${results.failedImports.length} tariffs failed to import.`;
+        toast({
+          title: 'Bulk Import Completed with Errors',
+          description: (
+            <div>
+              <p>{description}</p>
+              <ul className="list-disc pl-5">
+                {results.failedImports.slice(0, 3).map((item, i) => (
+                  <li key={i}>Wilaya {item.tariff.wilaya_code} ({item.tariff.store}): {item.error}</li>
+                ))}
+                {results.failedImports.length > 3 && <li>And {results.failedImports.length - 3} more failures...</li>}
+              </ul>
+            </div>
+          ),
+          variant: 'destructive',
+          duration: 9000,
+        });
+      } else {
+        toast({
+          title: 'Bulk Import Successful',
+          description: description || 'All tariffs imported successfully.',
+        });
+      }
+
+      setFile(null);
+      setParsedData([]); // Clear parsed data after import
+    } catch (error: any) {
+      toast({
+        title: 'Bulk Import Failed',
+        description: error.message || 'An unexpected error occurred during import.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+
   const filteredLaghouat = React.useMemo(() => {
     return laghouatTariffs.filter(t => 
       t.wilaya_name.toLowerCase().includes(searchLaghouat.toLowerCase()) || 
@@ -301,6 +491,76 @@ const AdminTarifs: React.FC = () => {
           <strong>Note:</strong> The store with the lowest delivery price is automatically selected at checkout. If prices are equal, Laghouat is selected by default.
         </p>
       </div>
+
+      {/* Bulk Import Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Bulk Import Tariffs</CardTitle>
+          <p className="text-sm text-muted-foreground">Upload a CSV or Excel file to update tariffs.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Button onClick={handleDownloadTemplate} className="w-full sm:w-auto">
+              Download Template
+            </Button>
+            <div className="relative w-full sm:w-auto flex-grow">
+              <Label htmlFor="tariff-upload" className="flex items-center justify-center h-10 w-full sm:w-auto cursor-pointer rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
+                  {file ? file.name : "Choose file..."}
+              </Label>
+              <Input
+                id="tariff-upload"
+                type="file"
+                accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                onChange={handleFileUpload}
+                className="sr-only" // Hide the native input visually but keep it accessible
+              />
+            </div>
+            <Button 
+                onClick={handleBulkImport} 
+                disabled={parsedData.length === 0 || bulkImport.isPending} 
+                className="w-full sm:w-auto"
+            >
+              {bulkImport.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              Import Tariffs ({parsedData.length} rows)
+            </Button>
+          </div>
+          {parsedData.length > 0 && (
+            <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
+              <h3 className="text-md font-semibold mb-2">Preview Data ({parsedData.length} rows)</h3>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/50">
+                    {Object.keys(parsedData[0]).map((key) => (
+                      <th key={key} className="py-2 px-3 text-center font-medium">{key}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsedData.slice(0, 5).map((row, rowIndex) => ( // Show first 5 rows for preview
+                    <tr key={rowIndex} className="border-t">
+                      {Object.values(row).map((value: any, colIndex) => (
+                        <td key={colIndex} className="py-2 px-3 text-center">{String(value)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                  {parsedData.length > 5 && (
+                    <tr>
+                      <td colSpan={Object.keys(parsedData[0]).length} className="text-center py-2 text-muted-foreground">
+                        ... {parsedData.length - 5} more rows
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <TariffTable
