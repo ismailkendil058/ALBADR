@@ -25,22 +25,7 @@ import { useCart } from '@/context/CartContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useCreateOrder, DeliveryType, OrderStatus } from '@/hooks/useOrders'; // Import useCreateOrder
-import { useWilayaTariffs } from '@/hooks/useTariffs';
-
-const WILAYAS = [
-  "01 - أدرار", "02 - الشلف", "03 - الأغواط", "04 - أم البواقي", "05 - باتنة",
-  "06 - بجاية", "07 - بسكرة", "08 - بشار", "09 - البليدة", "10 - البويرة",
-  "11 - تمنراست", "12 - تبسة", "13 - تلمسان", "14 - تيارت", "15 - تيزي وزو",
-  "16 - الجزائر", "17 - الجلفة", "18 - جيجل", "19 - سطيف", "20 - سعيدة",
-  "21 - سكيكدة", "22 - سيدي بلعباس", "23 - عنابة", "24 - قالمة", "25 - قسنطينة",
-  "26 - المدية", "27 - مستغانم", "28 - المسيلة", "29 - معسكر", "30 - ورقلة",
-  "31 - وهران", "32 - البيض", "33 - إليزي", "34 - برج بوعريريج", "35 - بومرداس",
-  "36 - الطارف", "37 - تندوف", "38 - تيسمسيلت", "39 - الوادي", "40 - خنشلة",
-  "41 - سوق أهراس", "42 - تيبازة", "43 - ميلة", "44 - عين الدفلى", "45 - النعامة",
-  "46 - عين تموشنت", "47 - غرداية", "48 - غليزان", "49 - تيميمون", "50 - برج باجي مختار",
-  "51 - أولاد جلال", "52 - بني عباس", "53 - عين صالح", "54 - عين قزام", "55 - تقرت",
-  "56 - جانت", "57 - المغير", "58 - المنيعة"
-];
+import { useWilayaTariffs, useActiveWilayas } from '@/hooks/useTariffs';
 
 const STORES = [
   {
@@ -92,6 +77,8 @@ const Checkout = () => {
     selectedStore: '',
     pickupDate: undefined,
   });
+
+  const { data: activeWilayas, isLoading: activeWilayasLoading } = useActiveWilayas();
 
   const selectedWilayaCode = formData.wilaya
     ? parseInt(formData.wilaya.split(' - ')[0], 10)
@@ -428,12 +415,13 @@ const Checkout = () => {
                       <Select
                         value={formData.wilaya}
                         onValueChange={(value) => setFormData({ ...formData, wilaya: value })}
+                        disabled={activeWilayasLoading}
                       >
                         <SelectTrigger className="w-full font-body">
-                          <SelectValue placeholder="اختر الولاية" />
+                          <SelectValue placeholder={activeWilayasLoading ? "جاري تحميل الولايات..." : "اختر الولاية"} />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                          {WILAYAS.map((wilaya) => (
+                          {activeWilayas?.map((wilaya) => (
                             <SelectItem key={wilaya} value={wilaya} className="font-body">
                               {wilaya}
                             </SelectItem>

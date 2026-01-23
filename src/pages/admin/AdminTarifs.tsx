@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+
 import { Save, Search, Store, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTariffs, useBulkUpdateTariffs, Tariff } from '@/hooks/useTariffs';
@@ -15,10 +17,13 @@ interface TariffTableProps {
   store: 'laghouat' | 'aflou';
   storeName: string;
   storeColor: string;
-  saveTariffs: (store: 'laghouat' | 'aflou') => Promise<void>;
+  saveTariffs: () => Promise<void>;
   bulkUpdate: UseMutationResult<any, Error, { id: string; home_price: number; bureau_price: number; retour: number }[], unknown>;
   getLocalValue: (tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour') => string;
   updateLocalPrice: (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour', value: string) => void;
+  updateLocalIsActive: (tariffId: string, tariff: Tariff, value: boolean) => void;
+  getLocalIsActive: (tariff: Tariff) => boolean;
+  hasChanges: boolean;
 }
 
 const TariffTable: React.FC<TariffTableProps> = ({
@@ -31,7 +36,10 @@ const TariffTable: React.FC<TariffTableProps> = ({
   saveTariffs,
   bulkUpdate,
   getLocalValue,
-  updateLocalPrice
+  updateLocalPrice,
+  updateLocalIsActive,
+  getLocalIsActive,
+  hasChanges
 }) => (
   <Card>
     <CardHeader className="pb-4">
@@ -45,7 +53,7 @@ const TariffTable: React.FC<TariffTableProps> = ({
             <p className="text-sm text-muted-foreground">{tariffs.length} wilayas</p>
           </div>
         </div>
-        <Button onClick={() => saveTariffs(store)} disabled={bulkUpdate.isPending}>
+        <Button onClick={saveTariffs} disabled={bulkUpdate.isPending || !hasChanges}>
           {bulkUpdate.isPending ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
@@ -66,22 +74,23 @@ const TariffTable: React.FC<TariffTableProps> = ({
     </CardHeader>
     <CardContent>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full table-fixed">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="text-left py-3 px-4 font-medium">Wilaya</th>
-              <th className="text-center py-3 px-4 font-medium">Home Delivery (DZD)</th>
-              <th className="text-center py-3 px-4 font-medium">Bureau Delivery (DZD)</th>
-              <th className="text-center py-3 px-4 font-medium">Return Cost (DZD)</th>
+              <th className="w-2/6 text-left py-3 px-2 font-medium">Wilaya</th>
+              <th className="w-1/6 text-center py-3 px-2 font-medium">Home</th>
+              <th className="w-1/6 text-center py-3 px-2 font-medium">Bureau</th>
+              <th className="w-1/6 text-center py-3 px-2 font-medium">Return</th>
+              <th className="w-1/6 text-center py-3 px-2 font-medium">Active</th>
             </tr>
           </thead>
           <tbody>
             {tariffs.map((tariff, index) => (
               <tr key={tariff.id} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
-                <td className="py-2 px-4 font-medium" dir="rtl">
+                <td className="py-2 px-2 font-medium" dir="rtl">
                   {tariff.wilaya_code} - {tariff.wilaya_name}
                 </td>
-                <td className="py-2 px-4">
+                <td className="py-2 px-2">
                   <Input
                     type="text"
                     pattern="[0-9]*"
@@ -89,10 +98,10 @@ const TariffTable: React.FC<TariffTableProps> = ({
                     onChange={(e) => {
                       updateLocalPrice(tariff.id, tariff, 'home_price', e.target.value);
                     }}
-                    className="w-24 mx-auto text-center"
+                    className="w-full mx-auto text-center"
                   />
                 </td>
-                <td className="py-2 px-4">
+                <td className="py-2 px-2">
                   <Input
                     type="text"
                     pattern="[0-9]*"
@@ -100,10 +109,10 @@ const TariffTable: React.FC<TariffTableProps> = ({
                     onChange={(e) => {
                       updateLocalPrice(tariff.id, tariff, 'bureau_price', e.target.value);
                     }}
-                    className="w-24 mx-auto text-center"
+                    className="w-full mx-auto text-center"
                   />
                 </td>
-                <td className="py-2 px-4">
+                <td className="py-2 px-2">
                   <Input
                     type="text"
                     pattern="[0-9]*"
@@ -111,8 +120,16 @@ const TariffTable: React.FC<TariffTableProps> = ({
                     onChange={(e) => {
                       updateLocalPrice(tariff.id, tariff, 'retour', e.target.value);
                     }}
-                    className="w-24 mx-auto text-center"
+                    className="w-full mx-auto text-center"
                   />
+                </td>
+                <td className="py-2 px-2 text-center">
+                  <div
+                    className={`h-4 w-4 rounded-full mx-auto cursor-pointer transition-colors duration-200 ${
+                      getLocalIsActive(tariff) ? 'bg-gray-400' : 'bg-deep-red'
+                    }`}
+                    onClick={() => updateLocalIsActive(tariff.id, tariff, !getLocalIsActive(tariff))}
+                  ></div>
                 </td>
               </tr>
             ))}
@@ -130,9 +147,10 @@ const AdminTarifs: React.FC = () => {
 
   const [searchLaghouat, setSearchLaghouat] = useState('');
   const [searchAflou, setSearchAflou] = useState('');
+  const [hasChanges, setHasChanges] = useState(false);
   
   // Local state for editing
-  const [localTariffs, setLocalTariffs] = useState<Record<string, { home_price: string | number; bureau_price: string | number; retour: string | number }>>({});
+  const [localTariffs, setLocalTariffs] = useState<Record<string, { home_price?: string | number; bureau_price?: string | number; retour?: string | number; is_active?: boolean }>>({});
 
   const laghouatTariffs = allTariffs.filter(t => t.store === 'laghouat');
   const aflouTariffs = allTariffs.filter(t => t.store === 'aflou');
@@ -142,12 +160,18 @@ const AdminTarifs: React.FC = () => {
     return String(value);
   };
 
+  const getLocalIsActive = (tariff: Tariff) => {
+    return (localTariffs[tariff.id]?.is_active ?? tariff.is_active) ?? true;
+  };
+
   const updateLocalPrice = (tariffId: string, tariff: Tariff, field: 'home_price' | 'bureau_price' | 'retour', value: string) => {
+    setHasChanges(true);
     setLocalTariffs(prev => {
       const existingTariff = prev[tariffId] || { 
         home_price: tariff.home_price, 
         bureau_price: tariff.bureau_price,
-        retour: tariff.retour
+        retour: tariff.retour,
+        is_active: tariff.is_active 
       };
       return {
         ...prev,
@@ -159,15 +183,56 @@ const AdminTarifs: React.FC = () => {
     });
   };
 
-  const saveTariffs = async (store: 'laghouat' | 'aflou') => {
-    const storeTariffs = store === 'laghouat' ? laghouatTariffs : aflouTariffs;
-    const updates = storeTariffs
-      .filter(t => localTariffs[t.id])
+  const updateLocalIsActive = (tariffId: string, tariff: Tariff, value: boolean) => {
+    setHasChanges(true);
+    setLocalTariffs(prev => {
+      // Update the current tariff
+      const updatedPrev = { ...prev };
+      const existingTariff = updatedPrev[tariffId] || { 
+        home_price: tariff.home_price, 
+        bureau_price: tariff.bureau_price,
+        retour: tariff.retour,
+        is_active: tariff.is_active 
+      };
+      updatedPrev[tariffId] = {
+        ...existingTariff,
+        is_active: value,
+      };
+
+      // Find the corresponding tariff in the other store and update it
+      const otherStore = tariff.store === 'laghouat' ? 'aflou' : 'laghouat';
+      const correspondingTariff = allTariffs.find(t => t.wilaya_code === tariff.wilaya_code && t.store === otherStore);
+
+      if (correspondingTariff) {
+        const existingOtherTariff = updatedPrev[correspondingTariff.id] || {
+          home_price: correspondingTariff.home_price,
+          bureau_price: correspondingTariff.bureau_price,
+          retour: correspondingTariff.retour,
+          is_active: correspondingTariff.is_active,
+        };
+        updatedPrev[correspondingTariff.id] = {
+          ...existingOtherTariff,
+          is_active: value,
+        };
+      }
+      return updatedPrev;
+    });
+  };
+
+  const saveTariffs = async () => {
+    const updates = allTariffs
+      .filter(t => localTariffs[t.id] && (
+        (localTariffs[t.id]?.home_price ?? t.home_price) !== t.home_price ||
+        (localTariffs[t.id]?.bureau_price ?? t.bureau_price) !== t.bureau_price ||
+        (localTariffs[t.id]?.retour ?? t.retour) !== t.retour ||
+        (localTariffs[t.id]?.is_active ?? t.is_active) !== t.is_active
+      ))
       .map(t => ({
         id: t.id,
-        home_price: parseFloat(String(localTariffs[t.id]?.home_price ?? t.home_price)) || 0,
-        bureau_price: parseFloat(String(localTariffs[t.id]?.bureau_price ?? t.bureau_price)) || 0,
-        retour: parseFloat(String(localTariffs[t.id]?.retour ?? t.retour)) || 0,
+        home_price: parseFloat(String(localTariffs[t.id]?.home_price ?? t.home_price)) || undefined,
+        bureau_price: parseFloat(String(localTariffs[t.id]?.bureau_price ?? t.bureau_price)) || undefined,
+        retour: parseFloat(String(localTariffs[t.id]?.retour ?? t.retour)) || undefined,
+        is_active: (localTariffs[t.id]?.is_active === undefined ? t.is_active : localTariffs[t.id]?.is_active) ?? undefined
       }));
 
     if (updates.length === 0) {
@@ -180,6 +245,7 @@ const AdminTarifs: React.FC = () => {
 
     try {
       await bulkUpdate.mutateAsync(updates);
+      setHasChanges(false); // Reset hasChanges after successful save
       // Clear local state for saved tariffs
       setLocalTariffs(prev => {
         const newState = { ...prev };
@@ -188,7 +254,7 @@ const AdminTarifs: React.FC = () => {
       });
       toast({
         title: 'Saved',
-        description: `${store.charAt(0).toUpperCase() + store.slice(1)} tariffs saved successfully`,
+        description: `All tariffs saved successfully`,
       });
     } catch (error) {
       toast({
@@ -248,6 +314,9 @@ const AdminTarifs: React.FC = () => {
           bulkUpdate={bulkUpdate}
           getLocalValue={getLocalValue}
           updateLocalPrice={updateLocalPrice}
+          updateLocalIsActive={updateLocalIsActive}
+          getLocalIsActive={getLocalIsActive}
+          hasChanges={hasChanges}
         />
 
         <TariffTable
@@ -261,6 +330,9 @@ const AdminTarifs: React.FC = () => {
           bulkUpdate={bulkUpdate}
           getLocalValue={getLocalValue}
           updateLocalPrice={updateLocalPrice}
+          updateLocalIsActive={updateLocalIsActive}
+          getLocalIsActive={getLocalIsActive}
+          hasChanges={hasChanges}
         />
       </div>
     </div>

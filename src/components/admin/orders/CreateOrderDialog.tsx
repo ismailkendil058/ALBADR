@@ -30,10 +30,9 @@ import {
 import { useCreateOrder, NewOrderWithItems, NewOrderItem } from '@/hooks/useOrders';
 import { useProducts, Product } from '@/hooks/useProducts';
 import { useToast } from '@/hooks/use-toast';
-import { algerianWilayas } from '@/data/adminData';
+import { useActiveWilayas, useCheapestDelivery } from '@/hooks/useTariffs';
 import { Loader2, Save, X, Trash2, PlusCircle } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useCheapestDelivery } from '@/hooks/useTariffs';
 
 interface CreateOrderDialogProps {
   isOpen: boolean;
@@ -169,6 +168,8 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
   const { data: productsData } = useProducts({ pageSize: 1000 }); // Fetch all products for matching
   const products = productsData?.data || [];
 
+  const { data: activeWilayas, isLoading: activeWilayasLoading } = useActiveWilayas();
+
   const { data: deliveryPriceData, isLoading: isDeliveryPriceLoading } = useCheapestDelivery(
     formData.wilaya_code,
     formData.delivery_type as 'home' | 'bureau' | 'pickup'
@@ -194,12 +195,14 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
 
   const handleSelectChange = (name: string, value: string) => {
     if (name === 'wilaya_name') {
-        const selectedWilaya = algerianWilayas.find(w => w.name === value);
-        if (selectedWilaya) {
+        const parts = value.split(' - ');
+        if (parts.length >= 2) {
+            const code = parseInt(parts[0], 10);
+            const wilayaName = parts.slice(1).join(' - '); // Re-join if name has hyphens
             setFormData(prev => ({
                 ...prev,
-                wilaya_name: selectedWilaya.name,
-                wilaya_code: selectedWilaya.code,
+                wilaya_name: wilayaName,
+                wilaya_code: code,
             }));
         }
     } else {
@@ -319,11 +322,11 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="wilaya_name">Wilaya</Label>
-                    <Select name="wilaya_name" value={formData.wilaya_name || ''} onValueChange={(selectedValue) => handleSelectChange('wilaya_name', selectedValue)}>
-                        <SelectTrigger><SelectValue placeholder="Select Wilaya" /></SelectTrigger>
+                    <Select name="wilaya_name" value={formData.wilaya_name || ''} onValueChange={(selectedValue) => handleSelectChange('wilaya_name', selectedValue)} disabled={activeWilayasLoading}>
+                        <SelectTrigger><SelectValue placeholder={activeWilayasLoading ? "Loading Wilayas..." : "Select Wilaya"} /></SelectTrigger>
                         <SelectContent>
-                            {algerianWilayas.map((wilaya) => (
-                            <SelectItem key={wilaya.code} value={wilaya.name}>{wilaya.name}</SelectItem>
+                            {activeWilayas?.map((wilaya) => (
+                            <SelectItem key={wilaya} value={wilaya}>{wilaya}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

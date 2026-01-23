@@ -277,6 +277,7 @@ export type Database = {
           updated_at: string
           wilaya_code: number
           wilaya_name: string
+          is_active: boolean | null
         }
         Insert: {
           bureau_price?: number
@@ -287,6 +288,7 @@ export type Database = {
           updated_at?: string
           wilaya_code: number
           wilaya_name: string
+          is_active?: boolean | null
         }
         Update: {
           bureau_price?: number
@@ -297,6 +299,7 @@ export type Database = {
           updated_at?: string
           wilaya_code?: number
           wilaya_name?: string
+          is_active?: boolean | null
         }
         Relationships: []
       }

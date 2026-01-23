@@ -1,20 +1,24 @@
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables, TablesUpdate } from '@/integrations/supabase/types';
 
 export type Tariff = Tables<'tariffs'>;
 
-export function useTariffs(store?: 'laghouat' | 'aflou') {
+export function useTariffs(options?: { store?: 'laghouat' | 'aflou'; isActive?: boolean }) {
   return useQuery({
-    queryKey: ['tariffs', store],
+    queryKey: ['tariffs', options?.store, options?.isActive],
     queryFn: async () => {
       let query = supabase
         .from('tariffs')
         .select('*')
         .order('wilaya_code', { ascending: true });
 
-      if (store) {
-        query = query.eq('store', store);
+      if (options?.store) {
+        query = query.eq('store', options.store);
+      }
+      if (options?.isActive !== undefined) {
+        query = query.eq('is_active', options.isActive);
       }
 
       const { data, error } = await query;
@@ -48,15 +52,17 @@ export function useBulkUpdateTariffs() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (updates: { id: string; home_price: number; bureau_price: number; retour: number }[]) => {
+    mutationFn: async (updates: { id: string; home_price?: number; bureau_price?: number; retour?: number; is_active?: boolean }[]) => {
       for (const update of updates) {
+        const payload: TablesUpdate<'tariffs'> = {};
+        if (update.home_price !== undefined) payload.home_price = update.home_price;
+        if (update.bureau_price !== undefined) payload.bureau_price = update.bureau_price;
+        if (update.retour !== undefined) payload.retour = update.retour;
+        if (update.is_active !== undefined) payload.is_active = update.is_active;
+
         const { error } = await supabase
           .from('tariffs')
-          .update({ 
-            home_price: update.home_price, 
-            bureau_price: update.bureau_price,
-            retour: update.retour
-          })
+          .update(payload)
           .eq('id', update.id);
 
         if (error) throw error;
@@ -100,7 +106,8 @@ export function useWilayaTariffs(wilayaCode: number | undefined) {
       const { data, error } = await supabase
         .from('tariffs')
         .select('store, home_price, bureau_price')
-        .eq('wilaya_code', wilayaCode);
+        .eq('wilaya_code', wilayaCode)
+        .eq('is_active', true);
       
       if (error) throw error;
       return data;
@@ -129,3 +136,27 @@ export function useCheapestDelivery(wilayaCode: number | undefined, deliveryType
     enabled: !!wilayaCode && deliveryType !== 'pickup',
   });
 }
+
+export function useActiveWilayas() {
+  const { data: allTariffs = [], isLoading, error } = useTariffs({ isActive: true });
+
+  const activeWilayas = React.useMemo(() => {
+    const uniqueWilayas = new Map<number, string>(); // Map to store unique wilayas by code
+    allTariffs.forEach(tariff => {
+      // Prioritize wilaya names for uniqueness, but ensure code is present
+      if (!uniqueWilayas.has(tariff.wilaya_code) && tariff.wilaya_name) {
+        uniqueWilayas.set(tariff.wilaya_code, `${tariff.wilaya_code.toString().padStart(2, '0')} - ${tariff.wilaya_name}`);
+      }
+    });
+
+    // Convert map values to array and sort by wilaya code
+    return Array.from(uniqueWilayas.values()).sort((a, b) => {
+      const codeA = parseInt(a.split(' - ')[0], 10);
+      const codeB = parseInt(b.split(' - ')[0], 10);
+      return codeA - codeB;
+    });
+  }, [allTariffs]);
+
+  return { data: activeWilayas, isLoading, error };
+}
+
