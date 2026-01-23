@@ -131,44 +131,56 @@ const AdminDashboard: React.FC = () => {
   
       const pickupRatio = totalOrders > 0 ? Math.round((ordersByDelivery.pickup / totalOrders) * 100) : 0;
   
-      const deliveryRatio = totalOrders > 0 ? Math.round((deliveryOrders / totalOrders) * 100) : 0;
-
-      // New: Confirmed to Delivered Success Rate
-      const confirmedAndDeliveredOrders = filteredOrders.filter(o => o.status === 'confirmed' || o.status === 'delivered');
-      const deliveredFromConfirmed = confirmedAndDeliveredOrders.filter(o => o.status === 'delivered').length;
-      const totalConfirmedPotential = confirmedAndDeliveredOrders.length;
-      const confirmedToDeliveredSuccessRate = totalConfirmedPotential > 0 ? (deliveredFromConfirmed / totalConfirmedPotential) * 100 : 0;
-
-  
-  
-  
-      return {
-  
-        totalOrders,
-  
-        totalRevenue,
-  
-        averageOrderValue,
-  
-        ordersByDelivery,
-  
-        ordersByStore,
-  
-                pickupRatio,
-  
-                deliveryRatio,
-  
-                confirmedToDeliveredSuccessRate,
-  
-                deliveredFromConfirmed,
-  
-                totalConfirmedPotential,
-  
-        
-  
-      };
-  
-    }, [filteredOrders]);
+            const deliveryRatio = totalOrders > 0 ? Math.round((deliveryOrders / totalOrders) * 100) : 0;
+      
+            // New: Confirmed to Delivered Success Rate
+            const confirmedAndDeliveredOrders = filteredOrders.filter(o => o.status === 'confirmed' || o.status === 'delivered');
+            const deliveredFromConfirmed = confirmedAndDeliveredOrders.filter(o => o.status === 'delivered').length;
+            const totalConfirmedPotential = confirmedAndDeliveredOrders.length;
+                  const confirmedToDeliveredSuccessRate = totalConfirmedPotential > 0 ? (deliveredFromConfirmed / totalConfirmedPotential) * 100 : 0;
+            
+                  const orderStatusBreakdown = {
+                    new: filteredOrders.filter(o => o.status === 'new').length,
+                    confirmed: filteredOrders.filter(o => o.status === 'confirmed').length,
+                    delivered: filteredOrders.filter(o => o.status === 'delivered').length,
+                    returned: filteredOrders.filter(o => o.status === 'returned').length,
+                  };
+            
+                  const confirmedAndReturnedOrders = filteredOrders.filter(o => o.status === 'confirmed' || o.status === 'returned');
+                  const returnedFromConfirmed = confirmedAndReturnedOrders.filter(o => o.status === 'returned').length;
+                  const totalConfirmedForReturnRatio = confirmedAndReturnedOrders.length;
+            
+            
+                  return {
+            
+                    totalOrders,
+            
+                    totalRevenue,
+            
+                    averageOrderValue,
+            
+                    ordersByDelivery,
+            
+                    ordersByStore,
+            
+                            pickupRatio,
+            
+                            deliveryRatio,
+            
+                            confirmedToDeliveredSuccessRate,
+            
+                            deliveredFromConfirmed,
+            
+                            totalConfirmedPotential,
+            
+                            orderStatusBreakdown,
+            
+                            returnedFromConfirmed,
+                            totalConfirmedForReturnRatio,
+            
+                    
+              
+                  };    }, [filteredOrders]);
   
   
   
@@ -258,10 +270,25 @@ const AdminDashboard: React.FC = () => {
   
   
         ].filter(d => d.value > 0);
-  
-  
-  
-    const isLoading = ordersLoading || productsLoading;
+
+        const orderStatusPieData = [
+          { name: 'New', value: stats.orderStatusBreakdown.new, color: CHART_COLORS.primary },
+          { name: 'Confirmed', value: stats.orderStatusBreakdown.confirmed, color: CHART_COLORS.secondary },
+          { name: 'Delivered', value: stats.orderStatusBreakdown.delivered, color: CHART_COLORS.tertiary },
+          { name: 'Returned', value: stats.orderStatusBreakdown.returned, color: CHART_COLORS.quaternary },
+          
+          
+          
+                ].filter(d => d.value > 0);
+        
+                const confirmedToReturnedPieData = [
+                  { name: 'Returned', value: stats.returnedFromConfirmed, color: CHART_COLORS.quinary },
+                  { name: 'Confirmed', value: stats.totalConfirmedForReturnRatio - stats.returnedFromConfirmed, color: CHART_COLORS.secondary },
+                ].filter(d => d.value > 0);
+          
+          
+          
+            const isLoading = ordersLoading || productsLoading;
   
   
   
@@ -639,74 +666,42 @@ const AdminDashboard: React.FC = () => {
   
             {deliveryPieData.length > 0 ? (
   
-              <div className="flex items-center">
-  
-                <ResponsiveContainer width="60%" height={220}>
-  
+              <div className="flex flex-col items-center h-full">
+                <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
-  
                     <Pie
-  
                       data={deliveryPieData}
-  
                       cx="50%"
-  
                       cy="50%"
-  
-                      innerRadius={55}
-  
-                      outerRadius={85}
-  
+                      innerRadius={65}
+                      outerRadius={95}
                       paddingAngle={3}
-  
                       dataKey="value"
-  
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-  
                       {deliveryPieData.map((entry, index) => (
-  
                         <Cell key={`cell-${index}`} fill={entry.color} />
-  
                       ))}
-  
                     </Pie>
-  
                     <Tooltip
-  
                       contentStyle={{
-  
                         backgroundColor: 'hsl(var(--card))',
-  
                         border: '1px solid hsl(var(--border))',
-  
                         borderRadius: '8px'
-  
                       }}
-  
                     />
-  
                   </PieChart>
-  
                 </ResponsiveContainer>
-  
-                <div className="flex flex-col gap-3">
-  
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-auto pt-4">
                   {deliveryPieData.map((item, i) => (
-  
                     <div key={i} className="flex items-center gap-2">
-  
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-  
                       <span className="text-sm text-muted-foreground">{item.name}</span>
-  
-                      <span className="text-sm font-medium ml-auto">{item.value}</span>
-  
+                      <span className="text-sm font-medium">{item.value}</span>
                     </div>
-  
                   ))}
-  
                 </div>
-  
               </div>
   
             ) : (
@@ -727,142 +722,42 @@ const AdminDashboard: React.FC = () => {
   
   
   
-                        <div className="flex items-center">
-  
-  
-  
-                          <ResponsiveContainer width="60%" height={220}>
-  
-  
-  
+                        <div className="flex flex-col items-center h-full">
+                          <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
-  
-  
-  
                               <Pie
-  
-  
-  
                                 data={storePieData}
-  
-  
-  
                                 cx="50%"
-  
-  
-  
                                 cy="50%"
-  
-  
-  
-                                innerRadius={55}
-  
-  
-  
-                                outerRadius={85}
-  
-  
-  
+                                innerRadius={65}
+                                outerRadius={95}
                                 paddingAngle={3}
-  
-  
-  
                                 dataKey="value"
-  
-  
-  
+                                labelLine={false}
+                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                               >
-  
-  
-  
                                 {storePieData.map((entry, index) => (
-  
-  
-  
                                   <Cell key={`cell-${index}`} fill={entry.color} />
-  
-  
-  
                                 ))}
-  
-  
-  
                               </Pie>
-  
-  
-  
                               <Tooltip
-  
-  
-  
                                 contentStyle={{
-  
-  
-  
                                   backgroundColor: 'hsl(var(--card))',
-  
-  
-  
                                   border: '1px solid hsl(var(--border))',
-  
-  
-  
                                   borderRadius: '8px'
-  
-  
-  
                                 }}
-  
-  
-  
                               />
-  
-  
-  
                             </PieChart>
-  
-  
-  
                           </ResponsiveContainer>
-  
-  
-  
-                          <div className="flex flex-col gap-3">
-  
-  
-  
+                          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-auto pt-4">
                             {storePieData.map((item, i) => (
-  
-  
-  
                               <div key={i} className="flex items-center gap-2">
-  
-  
-  
                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-  
-  
-  
                                 <span className="text-sm text-muted-foreground">{item.name}</span>
-  
-  
-  
-                                <span className="text-sm font-medium ml-auto">{item.value}</span>
-  
-  
-  
+                                <span className="text-sm font-medium">{item.value}</span>
                               </div>
-  
-  
-  
                             ))}
-  
-  
-  
                           </div>
-  
-  
-  
                         </div>
   
   
@@ -880,6 +775,50 @@ const AdminDashboard: React.FC = () => {
   
   
                     </ChartCard>
+
+                    <ChartCard title="Total Orders Breakdown" loading={isLoading}>
+            {orderStatusPieData.length > 0 ? (
+              <div className="flex flex-col items-center h-full">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={orderStatusPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={65}
+                      outerRadius={95}
+                      paddingAngle={3}
+                      dataKey="value"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {orderStatusPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-auto pt-4">
+                  {orderStatusPieData.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm text-muted-foreground">{item.name}</span>
+                      <span className="text-sm font-medium">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <EmptyChart />
+            )}
+          </ChartCard>
   
   
   
@@ -895,150 +834,43 @@ const AdminDashboard: React.FC = () => {
   
   
   
-                        <div className="flex items-center">
-  
-  
-  
-                                                    <ResponsiveContainer width="70%" height={220}>
-  
-  
-  
-                                                      <PieChart>
-  
-  
-  
-                                                        <Pie
-  
-  
-  
-                                                          data={confirmedToDeliveredPieData}
-  
-  
-  
-                                                          cx="50%"
-  
-  
-  
-                                                          cy="50%"
-  
-  
-  
-                                                          innerRadius={55}
-  
-  
-  
-                                                          outerRadius={85}
-  
-  
-  
-                                                          paddingAngle={3}
-  
-  
-  
-                                                          dataKey="value"
-  
-  
-  
-                                                          label={({ percent }) => `${(percent * 100).toFixed(0)}%`} // Add percentage label
-  
-  
-  
+                        <div className="flex flex-col items-center h-full">
+                          <ResponsiveContainer width="100%" height={200}>
+                            <PieChart>
+                              <Pie
+                                data={confirmedToDeliveredPieData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={65}
+                                outerRadius={95}
+                                paddingAngle={3}
+                                dataKey="value"
+                                labelLine={false}
+                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                               >
-  
-  
-  
                                 {confirmedToDeliveredPieData.map((entry, index) => (
-  
-  
-  
                                   <Cell key={`cell-${index}`} fill={entry.color} />
-  
-  
-  
                                 ))}
-  
-  
-  
                               </Pie>
-  
-  
-  
                               <Tooltip
-  
-  
-  
                                 formatter={(value: number, name: string) => [`${value} Orders`, name]}
-  
-  
-  
                                 contentStyle={{
-  
-  
-  
                                   backgroundColor: 'hsl(var(--card))',
-  
-  
-  
                                   border: '1px solid hsl(var(--border))',
-  
-  
-  
                                   borderRadius: '8px'
-  
-  
-  
                                 }}
-  
-  
-  
                               />
-  
-  
-  
                             </PieChart>
-  
-  
-  
                           </ResponsiveContainer>
-  
-  
-  
-                          <div className="flex flex-col gap-3">
-  
-  
-  
+                          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-auto pt-4">
                             {confirmedToDeliveredPieData.map((item, i) => (
-  
-  
-  
                               <div key={i} className="flex items-center gap-2">
-  
-  
-  
                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-  
-  
-  
                                 <span className="text-sm text-muted-foreground">{item.name}</span>
-  
-  
-  
-                                <span className="text-sm font-medium ml-auto">{item.value}</span>
-  
-  
-  
+                                <span className="text-sm font-medium">{item.value}</span>
                               </div>
-  
-  
-  
                             ))}
-  
-  
-  
                           </div>
-  
-  
-  
                         </div>
   
   
@@ -1055,6 +887,51 @@ const AdminDashboard: React.FC = () => {
   
   
   
+                    </ChartCard>
+
+                    <ChartCard title="Confirmed/Returns Ratio" loading={isLoading}>
+                      {confirmedToReturnedPieData.length > 0 ? (
+                        <div className="flex flex-col items-center h-full">
+                          <ResponsiveContainer width="100%" height={200}>
+                            <PieChart>
+                              <Pie
+                                data={confirmedToReturnedPieData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={65}
+                                outerRadius={95}
+                                paddingAngle={3}
+                                dataKey="value"
+                                labelLine={false}
+                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              >
+                                {confirmedToReturnedPieData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                formatter={(value: number, name: string) => [`${value} Orders`, name]}
+                                contentStyle={{
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px'
+                                }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-auto pt-4">
+                            {confirmedToReturnedPieData.map((item, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                                <span className="text-sm text-muted-foreground">{item.name}</span>
+                                <span className="text-sm font-medium">{item.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <EmptyChart />
+                      )}
                     </ChartCard>
   
         </div>
