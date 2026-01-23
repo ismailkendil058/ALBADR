@@ -143,6 +143,17 @@ const Checkout = () => {
       return;
     }
 
+    // Validate phone number to ensure it contains only digits
+    const phoneRegex = /^\d+$/;
+    if (!phoneRegex.test(formData.phone)) {
+      toast({
+        title: "خطأ",
+        description: "رقم الهاتف يجب أن يحتوي على أرقام فقط",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (formData.deliveryMethod !== 'pickup' && !formData.wilaya) {
       toast({
         title: "خطأ",
@@ -256,7 +267,7 @@ const Checkout = () => {
       }));
 
       const newOrder = await createOrder.mutateAsync({
-        order: orderPayload,
+        ...orderPayload,
         items: orderItemsPayload,
       });
 

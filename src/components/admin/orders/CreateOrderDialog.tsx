@@ -186,6 +186,12 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numericValue = value.replace(/\D/g, ''); // Keep only digits
+    setFormData(prev => ({ ...prev, [name]: numericValue }));
+  };
+
   const handleSelectChange = (name: string, value: string) => {
     if (name === 'wilaya_name') {
         const selectedWilaya = algerianWilayas.find(w => w.name === value);
@@ -303,7 +309,13 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({ isOpen, onClose }
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="customer_phone">Customer Phone</Label>
-                    <Input id="customer_phone" name="customer_phone" value={formData.customer_phone || ''} onChange={handleChange} />
+                    <Input
+                        id="customer_phone"
+                        name="customer_phone"
+                        type="tel" // Use type="tel" for better mobile keyboard experience
+                        value={formData.customer_phone || ''}
+                        onChange={handlePhoneChange} // Use a specific handler for phone number
+                    />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="wilaya_name">Wilaya</Label>
