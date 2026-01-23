@@ -15,12 +15,12 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
-const navItems = [
-  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { path: '/admin/tarifs', label: 'Tariffs', icon: Receipt, end: false },
-  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, end: false },
-  { path: '/admin/products', label: 'Products', icon: Package, end: false },
-  { path: '/admin/categories', label: 'Categories', icon: FolderTree, end: false },
+const navLinks = [
+  { path: '/superadmin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { path: '/superadmin/tarifs', label: 'Tariffs', icon: Receipt, end: false },
+  { path: '/superadmin/orders', label: 'Orders', icon: ShoppingCart, end: false },
+  { path: '/superadmin/products', label: 'Products', icon: Package, end: false },
+  { path: '/superadmin/categories', label: 'Categories', icon: FolderTree, end: false },
 ];
 
 const AdminLayout: React.FC = () => {
@@ -68,7 +68,7 @@ const AdminLayout: React.FC = () => {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
-            {navItems.map((item) => {
+            {navLinks.map((item) => {
               const isActive = item.end 
                 ? location.pathname === item.path
                 : location.pathname.startsWith(item.path);

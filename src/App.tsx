@@ -63,16 +63,16 @@ const App = () => (
                   <Route path="/checkout" element={<Checkout />} />
                   
                   {/* Admin Routes */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="tarifs" element={<AdminTarifs />} />
-                      <Route path="orders" element={<AdminOrders />} />
-                      <Route path="products" element={<AdminProducts />} />
-                      <Route path="categories" element={<AdminCategories />} />
+<Route path="/superadmin/login" element={<AdminLogin />} />
+              
+              {/* Protected Admin Routes */}
+              <Route path="/superadmin" element={<AdminLayout />}>
+                      <Route index element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                      <Route path="tarifs" element={<ProtectedRoute><AdminTarifs /></ProtectedRoute>} />
+                      <Route path="orders" element={<ProtectedRoute><AdminOrders /></ProtectedRoute>} />
+                      <Route path="products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
+                      <Route path="categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
                     </Route>
-                  </Route>
                   
                   <Route path="*" element={<NotFound />} />
                 </Routes>
