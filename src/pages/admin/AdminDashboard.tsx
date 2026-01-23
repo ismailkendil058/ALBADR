@@ -132,6 +132,13 @@ const AdminDashboard: React.FC = () => {
       const pickupRatio = totalOrders > 0 ? Math.round((ordersByDelivery.pickup / totalOrders) * 100) : 0;
   
       const deliveryRatio = totalOrders > 0 ? Math.round((deliveryOrders / totalOrders) * 100) : 0;
+
+      // New: Confirmed to Delivered Success Rate
+      const confirmedAndDeliveredOrders = filteredOrders.filter(o => o.status === 'confirmed' || o.status === 'delivered');
+      const deliveredFromConfirmed = confirmedAndDeliveredOrders.filter(o => o.status === 'delivered').length;
+      const totalConfirmedPotential = confirmedAndDeliveredOrders.length;
+      const confirmedToDeliveredSuccessRate = totalConfirmedPotential > 0 ? (deliveredFromConfirmed / totalConfirmedPotential) * 100 : 0;
+
   
   
   
@@ -147,9 +154,17 @@ const AdminDashboard: React.FC = () => {
   
         ordersByStore,
   
-        pickupRatio,
+                pickupRatio,
   
-        deliveryRatio,
+                deliveryRatio,
+  
+                confirmedToDeliveredSuccessRate,
+  
+                deliveredFromConfirmed,
+  
+                totalConfirmedPotential,
+  
+        
   
       };
   
@@ -210,13 +225,39 @@ const AdminDashboard: React.FC = () => {
   
   
   
-    const storePieData = [
+        const storePieData = [
   
-      { name: 'Laghouat', value: stats.ordersByStore.laghouat, color: CHART_COLORS.primary },
   
-      { name: 'Aflou', value: stats.ordersByStore.aflou, color: CHART_COLORS.tertiary },
   
-    ].filter(d => d.value > 0);
+          { name: 'Laghouat', value: stats.ordersByStore.laghouat, color: CHART_COLORS.primary },
+  
+  
+  
+          { name: 'Aflou', value: stats.ordersByStore.aflou, color: CHART_COLORS.tertiary },
+  
+  
+  
+        ].filter(d => d.value > 0);
+  
+  
+  
+    
+  
+  
+  
+        const confirmedToDeliveredPieData = [
+  
+  
+  
+          { name: 'Delivered', value: stats.deliveredFromConfirmed, color: CHART_COLORS.secondary },
+  
+  
+  
+          { name: 'Pending Delivery', value: stats.totalConfirmedPotential - stats.deliveredFromConfirmed, color: CHART_COLORS.tertiary },
+  
+  
+  
+        ].filter(d => d.value > 0);
   
   
   
@@ -678,87 +719,343 @@ const AdminDashboard: React.FC = () => {
   
   
   
-          <ChartCard title="Orders by Store" loading={isLoading}>
+                    <ChartCard title="Orders by Store" loading={isLoading}>
   
-            {storePieData.length > 0 ? (
   
-              <div className="flex items-center">
   
-                <ResponsiveContainer width="60%" height={220}>
+                      {storePieData.length > 0 ? (
   
-                  <PieChart>
   
-                    <Pie
   
-                      data={storePieData}
+                        <div className="flex items-center">
   
-                      cx="50%"
   
-                      cy="50%"
   
-                      innerRadius={55}
+                          <ResponsiveContainer width="60%" height={220}>
   
-                      outerRadius={85}
   
-                      paddingAngle={3}
   
-                      dataKey="value"
+                            <PieChart>
   
-                    >
   
-                      {storePieData.map((entry, index) => (
   
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                              <Pie
   
-                      ))}
   
-                    </Pie>
   
-                    <Tooltip
+                                data={storePieData}
   
-                      contentStyle={{
   
-                        backgroundColor: 'hsl(var(--card))',
   
-                        border: '1px solid hsl(var(--border))',
+                                cx="50%"
   
-                        borderRadius: '8px'
   
-                      }}
   
-                    />
+                                cy="50%"
   
-                  </PieChart>
   
-                </ResponsiveContainer>
   
-                <div className="flex flex-col gap-3">
+                                innerRadius={55}
   
-                  {storePieData.map((item, i) => (
   
-                    <div key={i} className="flex items-center gap-2">
   
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                                outerRadius={85}
   
-                      <span className="text-sm text-muted-foreground">{item.name}</span>
   
-                      <span className="text-sm font-medium ml-auto">{item.value}</span>
   
-                    </div>
+                                paddingAngle={3}
   
-                  ))}
   
-                </div>
   
-              </div>
+                                dataKey="value"
   
-            ) : (
   
-              <EmptyChart />
   
-            )}
+                              >
   
-          </ChartCard>
+  
+  
+                                {storePieData.map((entry, index) => (
+  
+  
+  
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+  
+  
+  
+                                ))}
+  
+  
+  
+                              </Pie>
+  
+  
+  
+                              <Tooltip
+  
+  
+  
+                                contentStyle={{
+  
+  
+  
+                                  backgroundColor: 'hsl(var(--card))',
+  
+  
+  
+                                  border: '1px solid hsl(var(--border))',
+  
+  
+  
+                                  borderRadius: '8px'
+  
+  
+  
+                                }}
+  
+  
+  
+                              />
+  
+  
+  
+                            </PieChart>
+  
+  
+  
+                          </ResponsiveContainer>
+  
+  
+  
+                          <div className="flex flex-col gap-3">
+  
+  
+  
+                            {storePieData.map((item, i) => (
+  
+  
+  
+                              <div key={i} className="flex items-center gap-2">
+  
+  
+  
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+  
+  
+  
+                                <span className="text-sm text-muted-foreground">{item.name}</span>
+  
+  
+  
+                                <span className="text-sm font-medium ml-auto">{item.value}</span>
+  
+  
+  
+                              </div>
+  
+  
+  
+                            ))}
+  
+  
+  
+                          </div>
+  
+  
+  
+                        </div>
+  
+  
+  
+                      ) : (
+  
+  
+  
+                        <EmptyChart />
+  
+  
+  
+                      )}
+  
+  
+  
+                    </ChartCard>
+  
+  
+  
+          
+  
+  
+  
+                    <ChartCard title="Confirmed to Delivered Success Rate" loading={isLoading}>
+  
+  
+  
+                      {confirmedToDeliveredPieData.length > 0 ? (
+  
+  
+  
+                        <div className="flex items-center">
+  
+  
+  
+                                                    <ResponsiveContainer width="70%" height={220}>
+  
+  
+  
+                                                      <PieChart>
+  
+  
+  
+                                                        <Pie
+  
+  
+  
+                                                          data={confirmedToDeliveredPieData}
+  
+  
+  
+                                                          cx="50%"
+  
+  
+  
+                                                          cy="50%"
+  
+  
+  
+                                                          innerRadius={55}
+  
+  
+  
+                                                          outerRadius={85}
+  
+  
+  
+                                                          paddingAngle={3}
+  
+  
+  
+                                                          dataKey="value"
+  
+  
+  
+                                                          label={({ percent }) => `${(percent * 100).toFixed(0)}%`} // Add percentage label
+  
+  
+  
+                              >
+  
+  
+  
+                                {confirmedToDeliveredPieData.map((entry, index) => (
+  
+  
+  
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+  
+  
+  
+                                ))}
+  
+  
+  
+                              </Pie>
+  
+  
+  
+                              <Tooltip
+  
+  
+  
+                                formatter={(value: number, name: string) => [`${value} Orders`, name]}
+  
+  
+  
+                                contentStyle={{
+  
+  
+  
+                                  backgroundColor: 'hsl(var(--card))',
+  
+  
+  
+                                  border: '1px solid hsl(var(--border))',
+  
+  
+  
+                                  borderRadius: '8px'
+  
+  
+  
+                                }}
+  
+  
+  
+                              />
+  
+  
+  
+                            </PieChart>
+  
+  
+  
+                          </ResponsiveContainer>
+  
+  
+  
+                          <div className="flex flex-col gap-3">
+  
+  
+  
+                            {confirmedToDeliveredPieData.map((item, i) => (
+  
+  
+  
+                              <div key={i} className="flex items-center gap-2">
+  
+  
+  
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+  
+  
+  
+                                <span className="text-sm text-muted-foreground">{item.name}</span>
+  
+  
+  
+                                <span className="text-sm font-medium ml-auto">{item.value}</span>
+  
+  
+  
+                              </div>
+  
+  
+  
+                            ))}
+  
+  
+  
+                          </div>
+  
+  
+  
+                        </div>
+  
+  
+  
+                      ) : (
+  
+  
+  
+                        <EmptyChart />
+  
+  
+  
+                      )}
+  
+  
+  
+                    </ChartCard>
   
         </div>
   
