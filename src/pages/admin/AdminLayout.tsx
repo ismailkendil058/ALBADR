@@ -44,10 +44,30 @@ const AdminLayout: React.FC = () => {
         />
       )}
 
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Mobile header */}
+        <header className="lg:hidden bg-card border-b p-4 flex items-center justify-between">
+          <h1 className="font-bold text-primary">طاحونة البدر</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
+
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out lg:transform-none",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        "fixed lg:static inset-y-0 right-0 z-50 w-64 bg-card border-l transform transition-transform duration-200 ease-in-out lg:transform-none",
+        sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -108,26 +128,6 @@ const AdminLayout: React.FC = () => {
           </div>
         </div>
       </aside>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Mobile header */}
-        <header className="lg:hidden bg-card border-b p-4 flex items-center justify-between">
-          <h1 className="font-bold text-primary">طاحونة البدر</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-5 h-5" />
-          </Button>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <Outlet />
-        </main>
-      </div>
     </div>
   );
 };
