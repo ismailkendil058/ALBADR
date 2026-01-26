@@ -53,20 +53,12 @@ export function useBulkUpdateTariffs() {
 
   return useMutation({
     mutationFn: async (updates: { id: string; home_price?: number; bureau_price?: number; retour?: number; is_active?: boolean }[]) => {
-      for (const update of updates) {
-        const payload: TablesUpdate<'tariffs'> = {};
-        if (update.home_price !== undefined) payload.home_price = update.home_price;
-        if (update.bureau_price !== undefined) payload.bureau_price = update.bureau_price;
-        if (update.retour !== undefined) payload.retour = update.retour;
-        if (update.is_active !== undefined) payload.is_active = update.is_active;
+      // Supabase upsert can handle an array of updates if IDs are provided
+      const { error } = await supabase
+        .from('tariffs')
+        .upsert(updates as any);
 
-        const { error } = await supabase
-          .from('tariffs')
-          .update(payload)
-          .eq('id', update.id);
-
-        if (error) throw error;
-      }
+      if (error) throw error;
       return updates.length;
     },
     onSuccess: () => {
@@ -118,7 +110,7 @@ export function useBulkImportTariffs() {
           // Update existing tariff
           const { error } = await supabase
             .from('tariffs')
-            .update(payload)
+            .update(payload as any)
             .eq('id', existingTariff.id);
           operationError = error;
           if (!error) {
@@ -149,12 +141,12 @@ export function useBulkImportTariffs() {
 
 export function useGetCheapestStore() {
   return useMutation({
-    mutationFn: async ({ 
-      wilayaCode, 
-      deliveryType 
-    }: { 
-      wilayaCode: number; 
-      deliveryType: 'home' | 'bureau' 
+    mutationFn: async ({
+      wilayaCode,
+      deliveryType
+    }: {
+      wilayaCode: number;
+      deliveryType: 'home' | 'bureau'
     }) => {
       const { data, error } = await supabase
         .rpc('get_cheapest_store', {
@@ -180,7 +172,7 @@ export function useWilayaTariffs(wilayaCode: number | undefined) {
         .select('store, home_price, bureau_price')
         .eq('wilaya_code', wilayaCode)
         .eq('is_active', true);
-      
+
       if (error) throw error;
       return data;
     },

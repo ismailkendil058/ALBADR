@@ -1,12 +1,13 @@
 import React from 'react';
 import { Navigate, Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAdminAuth } from '@/context/AdminAuthContext';
-import { 
-  LayoutDashboard, 
-  Receipt, 
-  ShoppingCart, 
-  Package, 
+import {
+  LayoutDashboard,
+  Receipt,
+  ShoppingCart,
+  Package,
   FolderTree,
+  Users,
   LogOut,
   Menu,
   X
@@ -17,6 +18,7 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { path: '/superadmin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { path: '/superadmin/employees', label: 'Employees', icon: Users, end: false },
   { path: '/superadmin/tarifs', label: 'Tariffs', icon: Receipt, end: false },
   { path: '/superadmin/orders', label: 'Orders', icon: ShoppingCart, end: false },
   { path: '/superadmin/products', label: 'Products', icon: Package, end: false },
@@ -36,7 +38,7 @@ const AdminLayout: React.FC = () => {
     <div className="min-h-screen bg-muted/30 flex">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -69,10 +71,10 @@ const AdminLayout: React.FC = () => {
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
             {navLinks.map((item) => {
-              const isActive = item.end 
+              const isActive = item.end
                 ? location.pathname === item.path
                 : location.pathname.startsWith(item.path);
-              
+
               return (
                 <NavLink
                   key={item.path}
@@ -81,8 +83,8 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
+                    isActive
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >

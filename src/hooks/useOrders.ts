@@ -9,8 +9,8 @@ export type DeliveryType = Enums<'delivery_type'>;
 
 export type OrderWithItems = Tables<'orders'> & { items: OrderItem[]; is_manual?: boolean; tariff_retour_price?: number; };
 
-export function useOrders({ 
-  page, 
+export function useOrders({
+  page,
   pageSize = 20,
   searchQuery,
   status,
@@ -19,8 +19,8 @@ export function useOrders({
   store,
   fromDate,
   toDate,
-}: { 
-  page: number, 
+}: {
+  page: number,
   pageSize?: number,
   searchQuery?: string,
   status?: string,
@@ -73,13 +73,13 @@ export function useOrders({
         .range(from, to);
 
       if (error) throw error;
-      
+
       return { data: data as OrderWithItems[], count };
     },
   });
 }
 
-export function useAllOrders({ 
+export function useAllOrders({
   searchQuery,
   status,
   deliveryType,
@@ -87,7 +87,7 @@ export function useAllOrders({
   store,
   fromDate,
   toDate,
-}: { 
+}: {
   searchQuery?: string,
   status?: string,
   deliveryType?: string,
@@ -135,7 +135,7 @@ export function useAllOrders({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       return data as OrderWithItems[];
     },
     enabled: false, // Only run when manually triggered
@@ -179,36 +179,24 @@ export function useOrdersByDateRange(from: Date, to: Date) {
 
       if (ordersError) throw ordersError;
 
-      // Extract unique wilaya_code and store combinations from orders
-      const uniqueTariffKeys = new Set(
-        ordersData.map(order => `${order.wilaya_code}-${order.send_from_store}`)
-      );
+      if (ordersData.length === 0) return [];
 
-      // Fetch tariffs for these combinations
-      const tariffPromises = Array.from(uniqueTariffKeys).map(key => {
-        const [wilaya_code, store] = key.split('-');
-        return supabase
-          .from('tariffs')
-          .select('retour') // Changed from 'return_price' to 'retour'
-          .eq('wilaya_code', parseInt(wilaya_code))
-          .eq('store', store)
-          .maybeSingle();
-      });
+      // Fetch all tariffs at once to avoid N+1 queries
+      const { data: tariffsData, error: tariffsError } = await supabase
+        .from('tariffs')
+        .select('wilaya_code, store, retour');
 
-      const tariffResults = await Promise.all(tariffPromises);
+      if (tariffsError) throw tariffsError;
 
       // Create a map for quick lookup of retour
       const tariffMap = new Map<string, number>(
-        tariffResults.map((result, index) => {
-          const key = Array.from(uniqueTariffKeys)[index];
-          return [key, result.data?.retour || 0]; // Changed from 'return_price' to 'retour'
-        })
+        tariffsData.map(t => [`${t.wilaya_code}-${t.store}`, t.retour])
       );
 
       // Merge retour into each order
       const ordersWithRetourPrice = ordersData.map(order => ({
         ...order,
-        tariff_retour_price: tariffMap.get(`${order.wilaya_code}-${order.send_from_store}`) || 0, // Changed from 'tariff_return_price' to 'tariff_retour_price'
+        tariff_retour_price: tariffMap.get(`${order.wilaya_code}-${order.send_from_store}`) || 0,
       }));
 
       return ordersWithRetourPrice as OrderWithItems[];

@@ -39,6 +39,7 @@ const AdminTarifs = lazy(() => import('./pages/admin/AdminTarifs'));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminEmployees = lazy(() => import('./pages/admin/AdminEmployees'));
 
 // Lazy-loaded employee pages
 const EmployeeLogin = lazy(() => import('./pages/employee/EmployeeLogin'));
@@ -69,25 +70,26 @@ const App = () => (
                     <Route path="/about" element={<AboutUs />} />
                     <Route path="/contact" element={<ContactUs />} />
                     <Route path="/checkout" element={<Checkout />} />
-                    
+
                     {/* Admin Routes */}
                     <Route path="/superadmin/login" element={<AdminLogin />} />
-                
+
                     {/* Protected Admin Routes */}
                     <Route path="/superadmin" element={<AdminLayout />}>
-                            <Route index element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                            <Route path="tarifs" element={<ProtectedRoute><AdminTarifs /></ProtectedRoute>} />
-                            <Route path="orders" element={<ProtectedRoute><AdminOrders /></ProtectedRoute>} />
-                            <Route path="products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
-                            <Route path="categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
-                          </Route>
+                      <Route index element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                      <Route path="employees" element={<ProtectedRoute><AdminEmployees /></ProtectedRoute>} />
+                      <Route path="tarifs" element={<ProtectedRoute><AdminTarifs /></ProtectedRoute>} />
+                      <Route path="orders" element={<ProtectedRoute><AdminOrders /></ProtectedRoute>} />
+                      <Route path="products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
+                      <Route path="categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
+                    </Route>
 
                     {/* Employee Routes */}
                     <Route path="/employee/login" element={<EmployeeLogin />} />
                     <Route path="/employee" element={<EmployeeProtectedRoute><EmployeeLayout /></EmployeeProtectedRoute>}>
                       <Route index element={<EmployeeDashboard />} />
                     </Route>
-                    
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>

@@ -106,13 +106,16 @@ const Checkout = () => {
 
   const deliveryFee = useMemo(() => {
     if (formData.deliveryMethod === 'pickup') return 0;
-    if (tariffsLoading) return 0;
-    if (formData.deliveryMethod === 'home') return deliveryPrices.home ?? 0;
-    if (formData.deliveryMethod === 'bureau') return deliveryPrices.bureau ?? 0;
+    if (tariffsLoading) return null;
+    if (formData.deliveryMethod === 'home') return deliveryPrices.home;
+    if (formData.deliveryMethod === 'bureau') return deliveryPrices.bureau;
     return 0;
   }, [formData.deliveryMethod, deliveryPrices, tariffsLoading]);
 
-  const finalTotal = totalPrice + deliveryFee;
+  const finalTotal = useMemo(() => {
+    if (deliveryFee === null) return totalPrice;
+    return totalPrice + deliveryFee;
+  }, [totalPrice, deliveryFee]);
 
   const selectedStoreInfo = STORES.find((store) => store.id === formData.selectedStore);
 
@@ -195,7 +198,7 @@ const Checkout = () => {
 
       if (formData.deliveryMethod === 'pickup' && selectedStoreInfo) {
         // For pickup, get wilaya from the selected store
-        const storeWilaya = WILAYAS.find(w => w.includes(selectedStoreInfo.wilaya));
+        const storeWilaya = activeWilayas?.find(w => w.includes(selectedStoreInfo.wilaya));
         if (storeWilaya) {
           wilayaCode = parseInt(storeWilaya.split(' - ')[0], 10);
           wilayaName = storeWilaya.split(' - ')[1];
@@ -685,13 +688,17 @@ const Checkout = () => {
                       <span className="text-muted-foreground">التوصيل</span>
                       {formData.deliveryMethod === 'pickup' ? (
                         <span className="text-green-600 font-semibold">مجاني</span>
+                      ) : deliveryFee === null ? (
+                        <span className="text-muted-foreground animate-pulse">جاري الحساب...</span>
                       ) : (
                         <span dir="ltr">{deliveryFee} د.ج</span>
                       )}
                     </div>
                     <div className="flex justify-between font-arabic font-bold text-lg pt-2 border-t border-border">
                       <span>المجموع الكلي</span>
-                      <span className="text-primary" dir="ltr">{finalTotal} د.ج</span>
+                      <span className="text-primary" dir="ltr">
+                        {deliveryFee === null ? '...' : `${finalTotal} د.ج`}
+                      </span>
                     </div>
                   </div>
                 </div>

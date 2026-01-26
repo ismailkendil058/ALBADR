@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import {
   Dialog,
@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -37,7 +37,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { 
+import {
   Search, Filter, Eye, Phone, MapPin, Truck, Store, Package, X, Trash2, Loader2, Building2, Scale, FileDown, Edit, Save, Plus
 } from 'lucide-react';
 import { format, parseISO, subDays } from 'date-fns';
@@ -79,7 +79,7 @@ const AdminOrders: React.FC = () => {
   });
   const { data: orders = [], count = 0 } = ordersData || {};
   const isMobile = useIsMobile();
-  
+
   const updateStatus = useUpdateOrderStatus();
   const bulkUpdateStatus = useBulkUpdateOrderStatus();
   const bulkDelete = useBulkDeleteOrders();
@@ -167,78 +167,83 @@ const AdminOrders: React.FC = () => {
     setDateRange(undefined);
   };
 
-        const handleExport = async () => {
-      setIsExporting(true);
-      try {
-        const { data: allOrders } = await fetchAllOrders();
-        if (!allOrders || allOrders.length === 0) {
-          toast({ title: 'Export Failed', description: 'No orders to export.', variant: 'destructive' });
-          return;
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const { data: allOrders } = await fetchAllOrders();
+      if (!allOrders || allOrders.length === 0) {
+        toast({ title: 'Export Failed', description: 'No orders to export.', variant: 'destructive' });
+        return;
+      }
+
+      // Determine the maximum number of items in any order
+      let maxItems = 0;
+      allOrders.forEach(order => {
+        if (order.items && order.items.length > maxItems) {
+          maxItems = order.items.length;
         }
+      });
 
-        // Determine the maximum number of items in any order
-        let maxItems = 0;
-        allOrders.forEach(order => {
-          if (order.items && order.items.length > maxItems) {
-            maxItems = order.items.length;
-          }
-        });
+      // Generate dynamic item headers
+      const itemHeaders = Array.from({ length: maxItems }, (_, i) => `Item ${i + 1}`);
 
-        // Generate dynamic item headers
-        const itemHeaders = Array.from({ length: maxItems }, (_, i) => `Item ${i + 1}`);
+      const csvHeader = [
+        "Order Number", "Customer Name", "Customer Phone",
+        "Wilaya", "Address", "Delivery Type", "Store",
+        "Subtotal", "Notes",
+        ...itemHeaders
+      ];
 
-        const csvHeader = [
-          "Order Number", "Customer Name", "Customer Phone",
-          "Wilaya", "Address", "Delivery Type", "Store",
-          "Subtotal", "Notes",
-          ...itemHeaders
+      const csvRows = allOrders.map(order => {
+        const escape = (val: any) => {
+          const str = String(val ?? '');
+          return `"${str.replace(/"/g, '""')}"`;
+        };
+
+        const baseColumns = [
+          order.order_number,
+          escape(order.customer_name),
+          order.customer_phone,
+          order.wilaya_name,
+          escape(order.address),
+          deliveryLabels[order.delivery_type],
+          order.send_from_store,
+          order.subtotal,
+          escape(order.notes)
         ];
 
-        const csvRows = allOrders.map(order => {
-          const baseColumns = [
-            order.order_number,
-            `"${order.customer_name}"`, // Corrected escaping for quotes within strings
-            order.customer_phone,
-            order.wilaya_name,
-            `"${order.address || ''}"`, // Corrected escaping for quotes within strings
-            deliveryLabels[order.delivery_type],
-            order.send_from_store,
-            order.subtotal,
-            `"${order.notes || ''}"` // Corrected escaping for quotes within strings
-          ];
+        // Map items to their string representation and pad with empty strings
+        const itemColumns = (order.items || []).map(item =>
+          escape(`${item.product_name_fr || item.product_name_ar} (Qty: ${item.quantity}, Price: ${item.unit_price}, Weight: ${item.weight || 'N/A'})`)
+        );
 
-          // Map items to their string representation and pad with empty strings
-          const itemColumns = (order.items || []).map(item =>
-            `"${item.product_name_fr || item.product_name_ar} (Qty: ${item.quantity}, Price: ${item.unit_price}, Weight: ${item.weight || 'N/A'})"` // Corrected escaping for quotes within strings
-          );
+        // Pad with empty strings if an order has fewer items than maxItems
+        while (itemColumns.length < maxItems) {
+          itemColumns.push('');
+        }
 
-          // Pad with empty strings if an order has fewer items than maxItems
-          while (itemColumns.length < maxItems) {
-            itemColumns.push('');
-          }
+        return [...baseColumns, ...itemColumns].join(',');
+      });
 
-          return [...baseColumns, ...itemColumns].join(',');
-        });
+      const csvContent = '\uFEFF' + [csvHeader.join(','), ...csvRows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-        const csvContent = '\uFEFF' + [csvHeader.join(','), ...csvRows].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      toast({ title: 'Export Successful', description: `${allOrders.length} orders have been exported.` });
 
-        toast({ title: 'Export Successful', description: `${allOrders.length} orders have been exported.` });
-
-      } catch (error) {
-        console.error("Export failed:", error);
-        toast({ title: 'Export Failed', description: 'An error occurred while exporting orders.', variant: 'destructive' });
-      } finally {
-        setIsExporting(false);
-      }
-    };
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({ title: 'Export Failed', description: 'An error occurred while exporting orders.', variant: 'destructive' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
   return (
@@ -268,39 +273,39 @@ const AdminOrders: React.FC = () => {
       )}
 
       <Card><CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search by order ID, customer name, or phone..." value={filters.searchQuery} onChange={(e) => handleFilterChange('searchQuery', e.target.value)} className="pl-10" />
-            </div>
-            <Button variant={showFilters ? "secondary" : "outline"} onClick={() => setShowFilters(!showFilters)}><Filter className="w-4 h-4 mr-2" />Filters{hasActiveFilters && (<span className="ml-2 w-2 h-2 bg-primary rounded-full" />)}</Button>
-            <Button variant="default" className="bg-green-500 text-white hover:bg-green-600" onClick={handleExport} disabled={isExporting}>
-              {isExporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileDown className="w-4 h-4 mr-2" />}
-              Export
-            </Button>
-            <Button variant="default" onClick={() => setShowCreateOrderDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Create Order
-            </Button>
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search by order ID, customer name, or phone..." value={filters.searchQuery} onChange={(e) => handleFilterChange('searchQuery', e.target.value)} className="pl-10" />
           </div>
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                <div><Label className="text-sm font-medium mb-1.5 block">Status</Label><Select value={filters.status} onValueChange={v => handleFilterChange('status', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm font-medium mb-1.5 block">Delivery</Label><Select value={filters.deliveryType} onValueChange={v => handleFilterChange('deliveryType', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm font-medium mb-1.5 block">Store</Label><Select value={filters.store} onValueChange={v => handleFilterChange('store', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="laghouat">Laghouat</SelectItem><SelectItem value="aflou">Aflou</SelectItem></SelectContent></Select></div>
-                <div className="flex flex-col gap-2"> {/* New div for DateRangePicker */}
-                    <Label className="text-sm font-medium mb-1.5 block">Date Range</Label>
-                    <DateRangePicker
-                        date={dateRange}
-                        onSelect={(range) => {
-                            setDateRange(range);
-                        }}
-                    />
-                </div>
+          <Button variant={showFilters ? "secondary" : "outline"} onClick={() => setShowFilters(!showFilters)}><Filter className="w-4 h-4 mr-2" />Filters{hasActiveFilters && (<span className="ml-2 w-2 h-2 bg-primary rounded-full" />)}</Button>
+          <Button variant="default" className="bg-green-500 text-white hover:bg-green-600" onClick={handleExport} disabled={isExporting}>
+            {isExporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <FileDown className="w-4 h-4 mr-2" />}
+            Export
+          </Button>
+          <Button variant="default" onClick={() => setShowCreateOrderDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Create Order
+          </Button>
+        </div>
+        {showFilters && (
+          <div className="mt-4 pt-4 border-t space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              <div><Label className="text-sm font-medium mb-1.5 block">Status</Label><Select value={filters.status} onValueChange={v => handleFilterChange('status', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label className="text-sm font-medium mb-1.5 block">Delivery</Label><Select value={filters.deliveryType} onValueChange={v => handleFilterChange('deliveryType', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem>{Object.keys(deliveryLabels).map(d => <SelectItem key={d} value={d}>{deliveryLabels[d as keyof typeof deliveryLabels]}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label className="text-sm font-medium mb-1.5 block">Store</Label><Select value={filters.store} onValueChange={v => handleFilterChange('store', v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="laghouat">Laghouat</SelectItem><SelectItem value="aflou">Aflou</SelectItem></SelectContent></Select></div>
+              <div className="flex flex-col gap-2"> {/* New div for DateRangePicker */}
+                <Label className="text-sm font-medium mb-1.5 block">Date Range</Label>
+                <DateRangePicker
+                  date={dateRange}
+                  onSelect={(range) => {
+                    setDateRange(range);
+                  }}
+                />
               </div>
-              {hasActiveFilters && <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={clearFilters}><X className="w-4 h-4 mr-1" />Clear Filters</Button></div>}
             </div>
-          )}
+            {hasActiveFilters && <div className="flex justify-end"><Button variant="ghost" size="sm" onClick={clearFilters}><X className="w-4 h-4 mr-1" />Clear Filters</Button></div>}
+          </div>
+        )}
       </CardContent></Card>
 
       {isMobile ? (
@@ -337,26 +342,26 @@ const AdminOrders: React.FC = () => {
                 <thead><tr className="border-b bg-muted/50 text-left"><th className="p-3"><Checkbox checked={selectedOrders.length === orders.length && orders.length > 0} onCheckedChange={toggleAllOrders} /></th><th className="p-3 font-medium">Order #</th><th className="p-3 font-medium">Customer</th><th className="p-3 font-medium">Delivery</th><th className="p-3 font-medium">Store</th><th className="p-3 font-medium">Total</th><th className="p-3 font-medium">Status</th><th className="p-3 font-medium">Date</th><th className="p-3 font-medium">Actions</th></tr></thead>
                 <tbody>
                   {isLoading ? (Array.from({ length: 10 }).map((_, i) => <tr key={i} className="border-b"><td colSpan={10} className="p-4"><Skeleton className="h-6 w-full" /></td></tr>))
-                  : orders.map((order) => (
-                    <tr key={order.id} className={`border-b hover:bg-muted/30 cursor-pointer ${order.is_manual ? 'bg-red-800/30' : ''}`} onClick={() => setSelectedOrder(order)}>
-                      <td className="p-3" onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedOrders.includes(order.id)} onCheckedChange={() => toggleOrderSelection(order.id)} /></td>
-                      <td className="p-3 font-mono text-xs">{order.order_number}</td>
-                      <td className="p-3"><div><p className="font-medium">{order.customer_name}</p><p className="text-xs text-muted-foreground">{order.customer_phone}</p></div></td>
-                      <td className="p-3"><div className="flex items-center gap-1.5">
+                    : orders.map((order) => (
+                      <tr key={order.id} className={`border-b hover:bg-muted/30 cursor-pointer ${order.is_manual ? 'bg-red-800/30' : ''}`} onClick={() => setSelectedOrder(order)}>
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedOrders.includes(order.id)} onCheckedChange={() => toggleOrderSelection(order.id)} /></td>
+                        <td className="p-3 font-mono text-xs">{order.order_number}</td>
+                        <td className="p-3"><div><p className="font-medium">{order.customer_name}</p><p className="text-xs text-muted-foreground">{order.customer_phone}</p></div></td>
+                        <td className="p-3"><div className="flex items-center gap-1.5">
                           {order.delivery_type === 'home' && <Truck className="w-4 h-4" />}
                           {order.delivery_type === 'bureau' && <Building2 className="w-4 h-4" />}
                           {order.delivery_type === 'pickup' && <Store className="w-4 h-4" />}
                           <span>{deliveryLabels[order.delivery_type]}</span>
-                      </div></td>
-                      <td className="p-3 capitalize">{order.send_from_store}</td>
-                      <td className="p-3 font-semibold">{order.total.toLocaleString()} DZD</td>
-                      <td className="p-3"><Select value={order.status} onValueChange={(v) => handleSingleStatusChange(order.id, v as OrderStatus)} onClick={(e) => e.stopPropagation()}><SelectTrigger className={`w-[120px] h-8 text-xs border-0 ${statusColors[order.status]}`}><SelectValue /></SelectTrigger><SelectContent>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></td>
-                      <td className="p-3 text-xs">{format(parseISO(order.created_at), 'dd/MM/yyyy HH:mm')}</td>
-                      <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" onClick={() => { setEditingOrder(order); setShowEditOrderDialog(true); }}><Edit className="w-4 h-4" /></Button>
-                      </td>
-                    </tr>
-                  ))}
+                        </div></td>
+                        <td className="p-3 capitalize">{order.send_from_store}</td>
+                        <td className="p-3 font-semibold">{order.total.toLocaleString()} DZD</td>
+                        <td className="p-3"><Select value={order.status} onValueChange={(v) => handleSingleStatusChange(order.id, v as OrderStatus)} onClick={(e) => e.stopPropagation()}><SelectTrigger className={`w-[120px] h-8 text-xs border-0 ${statusColors[order.status]}`}><SelectValue /></SelectTrigger><SelectContent>{Object.keys(statusLabels).map(s => <SelectItem key={s} value={s}>{statusLabels[s as OrderStatus]}</SelectItem>)}</SelectContent></Select></td>
+                        <td className="p-3 text-xs">{format(parseISO(order.created_at), 'dd/MM/yyyy HH:mm')}</td>
+                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingOrder(order); setShowEditOrderDialog(true); }}><Edit className="w-4 h-4" /></Button>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -375,28 +380,28 @@ const AdminOrders: React.FC = () => {
 
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}><DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
 
-          {selectedOrder && (
-            <>
-              <DialogHeader><DialogTitle>Order Details - {selectedOrder.order_number}</DialogTitle></DialogHeader>
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><Phone className="w-4 h-4" />Customer Information</h4><p>{selectedOrder.customer_name}</p><p className="text-muted-foreground">{selectedOrder.customer_phone}</p>{selectedOrder.customer_email && (<p className="text-muted-foreground">{selectedOrder.customer_email}</p>)}</div><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" />Delivery Information</h4><p>{selectedOrder.wilaya_name}</p>{selectedOrder.address && <p className="text-muted-foreground">{selectedOrder.address}</p>}<p className="text-sm">Type: {deliveryLabels[selectedOrder.delivery_type]}</p><p className="text-sm">Store: {selectedOrder.send_from_store.charAt(0).toUpperCase() + selectedOrder.send_from_store.slice(1)}</p></div></div>
-                <div><h4 className="font-semibold mb-3">Order Items</h4><div className="space-y-2">{selectedOrder.items.map((item, index) => (<div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">                      <div>
-                          <p className="font-medium">
-                            {(item.product_name_ar || item.product_name_fr || 'No Product Name Available')}
-                          </p>
-                          {item.weight && (
-                            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Scale className="w-3 h-3" /> {item.weight}</p>
-                          )}
-                          {item.product_name_ar && item.product_name_fr && item.product_name_ar !== item.product_name_fr && (
-                            <p className="text-sm text-muted-foreground">{item.product_name_fr}</p>
-                          )}
-                        </div><div className="text-right"><p className="font-semibold">{item.total_price.toLocaleString()} DZD</p><p className="text-sm text-muted-foreground">{item.quantity} × {item.unit_price.toLocaleString()} DZD</p></div></div>))}
-</div></div>
-                <div className="border-t pt-4 space-y-2"><div className="flex justify-between"><span>Subtotal</span><span>{selectedOrder.subtotal.toLocaleString()} DZD</span></div><div className="flex justify-between"><span>Delivery</span><span>{selectedOrder.delivery_price.toLocaleString()} DZD</span></div><div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">{selectedOrder.total.toLocaleString()} DZD</span></div></div>
-                {selectedOrder.notes && (<div className="bg-muted/50 p-4 rounded-lg"><h4 className="font-semibold mb-2">Notes</h4><p className="text-sm">{selectedOrder.notes}</p></div>)}
-              </div>
-            </>
-          )}
+        {selectedOrder && (
+          <>
+            <DialogHeader><DialogTitle>Order Details - {selectedOrder.order_number}</DialogTitle></DialogHeader>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><Phone className="w-4 h-4" />Customer Information</h4><p>{selectedOrder.customer_name}</p><p className="text-muted-foreground">{selectedOrder.customer_phone}</p>{selectedOrder.customer_email && (<p className="text-muted-foreground">{selectedOrder.customer_email}</p>)}</div><div className="space-y-2"><h4 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" />Delivery Information</h4><p>{selectedOrder.wilaya_name}</p>{selectedOrder.address && <p className="text-muted-foreground">{selectedOrder.address}</p>}<p className="text-sm">Type: {deliveryLabels[selectedOrder.delivery_type]}</p><p className="text-sm">Store: {selectedOrder.send_from_store.charAt(0).toUpperCase() + selectedOrder.send_from_store.slice(1)}</p></div></div>
+              <div><h4 className="font-semibold mb-3">Order Items</h4><div className="space-y-2">{selectedOrder.items.map((item, index) => (<div key={index} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">                      <div>
+                <p className="font-medium">
+                  {(item.product_name_ar || item.product_name_fr || 'No Product Name Available')}
+                </p>
+                {item.weight && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Scale className="w-3 h-3" /> {item.weight}</p>
+                )}
+                {item.product_name_ar && item.product_name_fr && item.product_name_ar !== item.product_name_fr && (
+                  <p className="text-sm text-muted-foreground">{item.product_name_fr}</p>
+                )}
+              </div><div className="text-right"><p className="font-semibold">{item.total_price.toLocaleString()} DZD</p><p className="text-sm text-muted-foreground">{item.quantity} × {item.unit_price.toLocaleString()} DZD</p></div></div>))}
+              </div></div>
+              <div className="border-t pt-4 space-y-2"><div className="flex justify-between"><span>Subtotal</span><span>{selectedOrder.subtotal.toLocaleString()} DZD</span></div><div className="flex justify-between"><span>Delivery</span><span>{selectedOrder.delivery_price.toLocaleString()} DZD</span></div><div className="flex justify-between font-bold text-lg border-t pt-2"><span>Total</span><span className="text-primary">{selectedOrder.total.toLocaleString()} DZD</span></div></div>
+              {selectedOrder.notes && (<div className="bg-muted/50 p-4 rounded-lg"><h4 className="font-semibold mb-2">Notes</h4><p className="text-sm">{selectedOrder.notes}</p></div>)}
+            </div>
+          </>
+        )}
       </DialogContent></Dialog>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}><AlertDialogContent>
@@ -404,13 +409,13 @@ const AdminOrders: React.FC = () => {
         <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{bulkDelete.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent></AlertDialog>
 
-      <EditOrderDialog 
-        order={editingOrder} 
-        isOpen={showEditOrderDialog} 
-        onClose={() => { 
-          setShowEditOrderDialog(false); 
-          setEditingOrder(null); 
-        }} 
+      <EditOrderDialog
+        order={editingOrder}
+        isOpen={showEditOrderDialog}
+        onClose={() => {
+          setShowEditOrderDialog(false);
+          setEditingOrder(null);
+        }}
       />
 
       {showCreateOrderDialog && (
