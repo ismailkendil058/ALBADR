@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { path: '/superadmin', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { path: '/superadmin/employees', label: 'Employees', icon: Users, end: false },
   { path: '/superadmin/tarifs', label: 'Tariffs', icon: Receipt, end: false },
   { path: '/superadmin/orders', label: 'Orders', icon: ShoppingCart, end: false },
   { path: '/superadmin/products', label: 'Products', icon: Package, end: false },
