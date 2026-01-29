@@ -1,1 +1,0 @@
-ALTER TABLE public.tariffs ADD COLUMN is_active BOOLEAN DEFAULT TRUE;

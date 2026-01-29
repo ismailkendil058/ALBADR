@@ -1,1 +1,0 @@
-ALTER TABLE public.tariffs ADD COLUMN return_price DECIMAL(10,2) NOT NULL DEFAULT 0;
