@@ -13,7 +13,7 @@ const Header = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { totalItems, totalPrice, setIsCartOpen } = useCart();
-  const { categories, loading } = useCategories();
+  const { categories, isLoading } = useCategories();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,31 +88,23 @@ const Header = () => {
                 <span>جميع الأقسام</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
               </button>
-              
+
               {isCategoryOpen && (
                 <div className="absolute top-full right-0 w-64 bg-card border border-border rounded-b-lg shadow-xl z-50 animate-fade-in">
-                  {loading ? (
+                  {isLoading ? (
                     <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
                   ) : (
-                    categories.map((category, index) => (
-                      <Link 
-                        key={category.id} 
+                    categories?.map((category) => (
+                      <Link
+                        key={category.id}
                         to={`/category/${category.id}`}
                         className="flex items-center justify-between px-4 py-3 font-body hover:bg-muted transition-colors"
                       >
                         <span>
-                          {index === 0 ? (
-                            <>الزهور والنباتات العطرية <span className="text-xs text-muted-foreground">- Fleurs et Plantes Aromatiques</span></>
-                          ) : index === 1 ? (
-                            <>الأعشاب والنباتات الطبية <span className="text-xs text-muted-foreground">- Herbes et Plantes Médicinales</span></>
-                          ) : index === 2 ? (
-                            <>البذور والحبوب <span className="text-xs text-muted-foreground">- Graines et Céréales</span></>
-                          ) : index === 3 ? (
-                            <>النباتات المجففة والمشروبات العشبية <span className="text-xs text-muted-foreground">- Plantes Séchées</span></>
-                          ) : (category.name || category.nameAr)}
+                          {category.name_ar} <span className="text-xs text-muted-foreground">- {category.name_fr}</span>
                         </span>
-                        {category.productCount > 0 && (
-                          <span className="text-muted-foreground text-sm">({category.productCount})</span>
+                        {category.products && category.products[0]?.count > 0 && (
+                          <span className="text-muted-foreground text-sm">({category.products[0].count})</span>
                         )}
                       </Link>
                     ))
@@ -133,24 +125,16 @@ const Header = () => {
         <div className="md:hidden bg-card border-t border-border animate-slide-in-right">
           <div className="container py-4">
             <div className="space-y-2">
-              {loading ? (
+              {isLoading ? (
                 <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
               ) : (
-                categories.map((category, index) => (
-                  <Link key={category.id} to={`/category/${category.id}`} className={`flex items-center justify-between px-4 py-3 font-body hover:bg-muted rounded-lg transition-colors ${category.isSpecial ? 'border-r-4 border-primary bg-primary/5' : ''}`} onClick={() => setIsMenuOpen(false)}>
+                categories?.map((category) => (
+                  <Link key={category.id} to={`/category/${category.id}`} className={`flex items-center justify-between px-4 py-3 font-body hover:bg-muted rounded-lg transition-colors ${category.is_special ? 'border-r-4 border-primary bg-primary/5' : ''}`} onClick={() => setIsMenuOpen(false)}>
                     <span>
-                      {index === 0 ? (
-                        <>الزهور والنباتات العطرية <span className="text-xs text-muted-foreground">- Fleurs et Plantes Aromatiques</span></>
-                      ) : index === 1 ? (
-                        <>الأعشاب والنباتات الطبية <span className="text-xs text-muted-foreground">- Herbes et Plantes Médicinales</span></>
-                      ) : index === 2 ? (
-                        <>البذور والحبوب <span className="text-xs text-muted-foreground">- Graines et Céréales</span></>
-                      ) : index === 3 ? (
-                        <>النباتات المجففة والمشروبات العشبية <span className="text-xs text-muted-foreground">- Plantes Séchées</span></>
-                      ) : (category.name || category.nameAr)}
+                      {category.name_ar} <span className="text-xs text-muted-foreground">- {category.name_fr}</span>
                     </span>
-                    {category.productCount > 0 && (
-                      <span className="text-muted-foreground text-sm">({category.productCount})</span>
+                    {category.products && category.products[0]?.count > 0 && (
+                      <span className="text-muted-foreground text-sm">({category.products[0].count})</span>
                     )}
                   </Link>
                 ))

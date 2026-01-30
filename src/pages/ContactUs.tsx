@@ -9,8 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
+import { useContactMessages } from '@/hooks/useContactMessages';
+
 const ContactUs = () => {
   const { toast } = useToast();
+  const { sendMessage } = useContactMessages();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -23,23 +26,39 @@ const ContactUs = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      await sendMessage({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email || null,
+        message: formData.message,
+        status: 'new'
+      });
 
-    toast({
-      title: "تم إرسال رسالتك بنجاح",
-      description: "سنتواصل معك في أقرب وقت ممكن",
-    });
+      toast({
+        title: "تم إرسال رسالتك بنجاح",
+        description: "سنتواصل معك في أقرب وقت ممكن",
+        variant: "default",
+      });
 
-    setFormData({ name: '', phone: '', email: '', message: '' });
-    setIsSubmitting(false);
+      setFormData({ name: '', phone: '', email: '', message: '' });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "خطأ",
+        description: "تعذر إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="bg-muted/50 py-3">
@@ -75,7 +94,7 @@ const ContactUs = () => {
                 <h2 className="text-2xl font-arabic-display font-bold text-secondary mb-6">
                   معلومات الاتصال
                 </h2>
-                
+
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -103,10 +122,10 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-arabic font-semibold mb-1">العنوان</h3>
-                      <a 
-                        href="https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href="https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-muted-foreground font-body hover:text-primary transition-colors"
                       >
                         Laghouat,Algeria

@@ -9,8 +9,8 @@ export type DeliveryType = Enums<'delivery_type'>;
 
 export type OrderWithItems = Tables<'orders'> & { items: OrderItem[]; is_manual?: boolean; tariff_retour_price?: number; };
 
-export function useOrders({ 
-  page, 
+export function useOrders({
+  page,
   pageSize = 20,
   searchQuery,
   status,
@@ -19,8 +19,8 @@ export function useOrders({
   store,
   fromDate,
   toDate,
-}: { 
-  page: number, 
+}: {
+  page: number,
   pageSize?: number,
   searchQuery?: string,
   status?: string,
@@ -73,13 +73,13 @@ export function useOrders({
         .range(from, to);
 
       if (error) throw error;
-      
+
       return { data: data as OrderWithItems[], count };
     },
   });
 }
 
-export function useAllOrders({ 
+export function useAllOrders({
   searchQuery,
   status,
   deliveryType,
@@ -87,7 +87,7 @@ export function useAllOrders({
   store,
   fromDate,
   toDate,
-}: { 
+}: {
   searchQuery?: string,
   status?: string,
   deliveryType?: string,
@@ -135,7 +135,7 @@ export function useAllOrders({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       return data as OrderWithItems[];
     },
     enabled: false, // Only run when manually triggered
@@ -312,7 +312,10 @@ export function useUpdateOrder() {
 }
 
 export type NewOrderItem = Omit<TablesInsert<'order_items'>, 'order_id' | 'id'>;
-export type NewOrderWithItems = TablesInsert<'orders'> & { items: NewOrderItem[] };
+export type NewOrderWithItems = Omit<TablesInsert<'orders'>, 'order_number'> & {
+  order_number?: string;
+  items: NewOrderItem[];
+};
 
 
 export function useCreateOrder() {

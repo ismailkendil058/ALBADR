@@ -5,21 +5,21 @@ const TopBar = () => {
   return (
     <div className="bg-secondary text-secondary-foreground py-2">
       <div className="container flex items-center justify-between">
-        <div className="flex items-center gap-2 font-body text-sm" dir="ltr">
+        <a href="tel:0660408520" className="flex items-center gap-2 font-body text-sm hover:text-primary transition-colors" dir="ltr">
           <Phone className="w-4 h-4" />
           <span>0660 40 85 20</span>
-        </div>
-        
+        </a>
+
         <div className="flex items-center gap-4">
-          <a 
-            href="https://www.facebook.com/share/1WDFD5GEc9/?mibextid=wwXIfr" 
+          <a
+            href="https://www.facebook.com/share/1WDFD5GEc9/?mibextid=wwXIfr"
             className="hover:text-primary transition-colors"
             aria-label="Facebook"
           >
             <Facebook className="w-4 h-4" />
           </a>
-          <a 
-            href="https://www.instagram.com/moulin_albadr?igsh=bnRweGF5a2pqZmN4" 
+          <a
+            href="https://www.instagram.com/moulin_albadr?igsh=bnRweGF5a2pqZmN4"
             className="hover:text-primary transition-colors"
             aria-label="Instagram"
           >

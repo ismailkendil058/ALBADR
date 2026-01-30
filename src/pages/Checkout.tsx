@@ -120,7 +120,7 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.firstName || !formData.phone) {
       toast({
         title: "خطأ",
@@ -179,12 +179,12 @@ const Checkout = () => {
 
     // If delivery is not pickup, and delivery fee is still loading or an error occurred, prevent submission
     if (formData.deliveryMethod !== 'pickup' && (tariffsLoading || tariffsError)) {
-        toast({
-            title: "خطأ",
-            description: "جاري حساب سعر التوصيل. يرجى المحاولة مرة أخرى.",
-            variant: "destructive"
-        });
-        return;
+      toast({
+        title: "خطأ",
+        description: "جاري حساب سعر التوصيل. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+      return;
     }
 
     setIsSubmitting(true);
@@ -195,7 +195,7 @@ const Checkout = () => {
 
       if (formData.deliveryMethod === 'pickup' && selectedStoreInfo) {
         // For pickup, get wilaya from the selected store
-        const storeWilaya = WILAYAS.find(w => w.includes(selectedStoreInfo.wilaya));
+        const storeWilaya = activeWilayas?.find(w => w.includes(selectedStoreInfo.wilaya));
         if (storeWilaya) {
           wilayaCode = parseInt(storeWilaya.split(' - ')[0], 10);
           wilayaName = storeWilaya.split(' - ')[1];
@@ -215,7 +215,7 @@ const Checkout = () => {
         setIsSubmitting(false);
         return;
       }
-      
+
       // Determine sending store based on cheapest delivery
       let sendFromStoreId: string;
       if (formData.deliveryMethod === 'pickup') {
@@ -238,8 +238,8 @@ const Checkout = () => {
         total: finalTotal,
         status: 'new' as OrderStatus, // Default status
         send_from_store: sendFromStoreId,
-        notes: formData.deliveryMethod === 'pickup' && formData.pickupDate 
-          ? `Pickup on: ${format(formData.pickupDate, 'yyyy-MM-dd')}` 
+        notes: formData.deliveryMethod === 'pickup' && formData.pickupDate
+          ? `Pickup on: ${format(formData.pickupDate, 'yyyy-MM-dd')}`
           : null,
       };
 
@@ -249,7 +249,7 @@ const Checkout = () => {
         product_name_fr: item.product.nameFr || item.product.nameAr || 'Unnamed Product (FR)',
         quantity: item.quantity,
         unit_price: item.product.price,
-        weight: item.selectedWeight?.weight || item.weight || null,
+        weight: item.selectedWeight?.weight || null,
         total_price: item.product.price * item.quantity,
       }));
 
@@ -334,7 +334,7 @@ const Checkout = () => {
               تم تأكيد طلبك بنجاح! {orderNumber && `(رقم الطلب: ${orderNumber})`}
             </h1>
             <p className="text-muted-foreground font-body mb-6">
-              شكراً لك على طلبك. سنتواصل معك قريباً لتأكيد التفاصيل.
+              شكراً لك على طلبك {formData.wilaya && `لولاية ${formData.wilaya.split(' - ')[1]}`}. سنتواصل معك قريباً لتأكيد التفاصيل.
               {orderNumber && ` رقم طلبك هو: ${orderNumber}.`}
             </p>
             <Button onClick={() => navigate('/')} className="font-body">
@@ -351,7 +351,7 @@ const Checkout = () => {
     <div className="min-h-screen flex flex-col">
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="bg-muted/50 py-3">
@@ -378,7 +378,7 @@ const Checkout = () => {
                   {/* Customer Info */}
                   <div className="bg-card rounded-xl p-6 border border-border">
                     <h2 className="text-xl font-arabic font-semibold mb-4">معلومات الزبون</h2>
-                    
+
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block font-body text-sm mb-2">الاسم <span className="text-primary">*</span></label>
@@ -411,7 +411,7 @@ const Checkout = () => {
                   {formData.deliveryMethod !== 'pickup' && (
                     <div className="bg-card rounded-xl p-6 border border-border">
                       <h2 className="text-xl font-arabic font-semibold mb-4">الولاية <span className="text-primary">*</span></h2>
-                      
+
                       <Select
                         value={formData.wilaya}
                         onValueChange={(value) => setFormData({ ...formData, wilaya: value })}
@@ -434,16 +434,15 @@ const Checkout = () => {
                   {/* Delivery Method */}
                   <div className="bg-card rounded-xl p-6 border border-border">
                     <h2 className="text-xl font-arabic font-semibold mb-4">طريقة التوصيل</h2>
-                    
+
                     <div className="grid sm:grid-cols-3 gap-4">
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, deliveryMethod: 'home', selectedStore: '' })}
-                        className={`p-4 rounded-lg border-2 transition-all text-right ${
-                          formData.deliveryMethod === 'home'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all text-right ${formData.deliveryMethod === 'home'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                          }`}
                       >
                         <Truck className={`w-8 h-8 mb-2 ${formData.deliveryMethod === 'home' ? 'text-primary' : 'text-muted-foreground'}`} />
                         <h3 className="font-arabic font-semibold">توصيل للمنزل</h3>
@@ -458,11 +457,10 @@ const Checkout = () => {
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, deliveryMethod: 'bureau', address: '', selectedStore: '' })}
-                        className={`p-4 rounded-lg border-2 transition-all text-right ${
-                          formData.deliveryMethod === 'bureau'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all text-right ${formData.deliveryMethod === 'bureau'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                          }`}
                       >
                         <Building2 className={`w-8 h-8 mb-2 ${formData.deliveryMethod === 'bureau' ? 'text-primary' : 'text-muted-foreground'}`} />
                         <h3 className="font-arabic font-semibold">مكتب التوصيل</h3>
@@ -477,11 +475,10 @@ const Checkout = () => {
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, deliveryMethod: 'pickup', address: '', wilaya: '' })}
-                        className={`p-4 rounded-lg border-2 transition-all text-right ${
-                          formData.deliveryMethod === 'pickup'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}
+                        className={`p-4 rounded-lg border-2 transition-all text-right ${formData.deliveryMethod === 'pickup'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                          }`}
                       >
                         <Store className={`w-8 h-8 mb-2 ${formData.deliveryMethod === 'pickup' ? 'text-primary' : 'text-muted-foreground'}`} />
                         <h3 className="font-arabic font-semibold">استلام من المتجر</h3>
@@ -542,9 +539,8 @@ const Checkout = () => {
                               <Button
                                 type="button"
                                 variant="outline"
-                                className={`w-full justify-between font-body ${
-                                  !formData.pickupDate ? 'text-muted-foreground' : ''
-                                }`}
+                                className={`w-full justify-between font-body ${!formData.pickupDate ? 'text-muted-foreground' : ''
+                                  }`}
                               >
                                 <span>
                                   {formData.pickupDate
@@ -581,7 +577,7 @@ const Checkout = () => {
                                 بدون مصاريف توصيل
                               </span>
                             </div>
-                            
+
                             <div className="space-y-2 text-sm">
                               <div className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
@@ -607,9 +603,9 @@ const Checkout = () => {
                   </div>
 
                   {/* Submit Button */}
-                  <Button 
-                    type="submit" 
-                    size="lg" 
+                  <Button
+                    type="submit"
+                    size="lg"
                     className="w-full font-body text-lg"
                     disabled={isSubmitting || createOrder.isPending} // Use createOrder.isPending
                   >
@@ -622,7 +618,7 @@ const Checkout = () => {
               <div className="lg:col-span-1">
                 <div className="bg-card rounded-xl p-6 border border-border sticky top-24">
                   <h2 className="text-xl font-arabic font-semibold mb-4">ملخص الطلب</h2>
-                  
+
                   {/* Products */}
                   <div className="space-y-4 mb-6">
                     {items.map((item) => (
@@ -660,7 +656,7 @@ const Checkout = () => {
                         {formData.deliveryMethod === 'pickup' && 'استلام من المتجر'}
                       </span>
                     </div>
-                    {formData.deliveryMethod === 'pickup' && (
+                    {formData.deliveryMethod === 'pickup' ? (
                       <div className="mr-6 space-y-1">
                         {selectedStoreInfo && (
                           <p className="text-xs text-muted-foreground font-body">
@@ -673,6 +669,14 @@ const Checkout = () => {
                           </p>
                         )}
                       </div>
+                    ) : (
+                      formData.wilaya && (
+                        <div className="mr-6 space-y-1">
+                          <p className="text-xs text-muted-foreground font-body">
+                            الولاية: {formData.wilaya.split(' - ')[1]}
+                          </p>
+                        </div>
+                      )
                     )}
                   </div>
 

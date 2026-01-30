@@ -37,6 +37,7 @@ const AdminTarifs = lazy(() => import('./pages/admin/AdminTarifs'));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 
 const queryClient = new QueryClient();
 
@@ -61,7 +62,7 @@ const App = () => (
                   <Route path="/about" element={<AboutUs />} />
                   <Route path="/contact" element={<ContactUs />} />
                   <Route path="/checkout" element={<Checkout />} />
-                  
+
                   {/* Admin Routes */}
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route element={<ProtectedRoute />}>
@@ -71,9 +72,10 @@ const App = () => (
                       <Route path="orders" element={<AdminOrders />} />
                       <Route path="products" element={<AdminProducts />} />
                       <Route path="categories" element={<AdminCategories />} />
+                      <Route path="messages" element={<AdminMessages />} />
                     </Route>
                   </Route>
-                  
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

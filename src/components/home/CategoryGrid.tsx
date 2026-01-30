@@ -24,6 +24,16 @@ const CategoryGrid = () => {
     );
   }
 
+  if (!categories || categories.length === 0) {
+    return (
+      <section className="py-12 md:py-16 bg-background flex items-center justify-center">
+        <CardContent>
+          <p className="text-muted-foreground font-body">No categories available</p>
+        </CardContent>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 md:py-16 bg-background">
       <div className="container">
@@ -40,7 +50,7 @@ const CategoryGrid = () => {
               className={`category-card group aspect-square ${category.is_special ? 'ring-2 ring-primary ring-offset-2' : ''}`}
             >
               <img src={category.image || '/placeholder.svg'} alt={category.name_ar} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" decoding="async" />
-              
+
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-4">
                 {category.is_special && <span className="badge-promo mb-2 text-xs">عرض خاص</span>}
                 <h3 className="text-xl md:text-2xl font-arabic-display font-bold text-primary-foreground">{category.name_ar}</h3>
