@@ -3,10 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { AdminAuthProvider } from "@/context/AdminAuthContext";
+import { EmployeeAuthProvider } from "@/context/EmployeeAuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Loader2 } from 'lucide-react';
@@ -38,6 +39,12 @@ const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
+const AdminAccess = lazy(() => import('./pages/admin/AdminAccess'));
+
+// Lazy-loaded employee pages
+const EmployeeLogin = lazy(() => import('./pages/employee/EmployeeLogin'));
+const EmployeeLayout = lazy(() => import('./pages/employee/EmployeeLayout'));
+const EmployeeOrders = lazy(() => import('./pages/employee/EmployeeOrders'));
 
 const queryClient = new QueryClient();
 
@@ -47,39 +54,51 @@ const App = () => (
       <CartProvider>
         <WishlistProvider>
           <AdminAuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <ScrollToTop />
-              <Suspense fallback={<FullPageLoader />}>
-                <Routes>
-                  {/* Storefront Routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/product/:id" element={<ProductDetails />} />
-                  <Route path="/category/:categoryId" element={<CategoryPage />} />
-                  <Route path="/search" element={<SearchResults />} />
-                  <Route path="/products" element={<AllProducts />} />
-                  <Route path="/about" element={<AboutUs />} />
-                  <Route path="/contact" element={<ContactUs />} />
-                  <Route path="/checkout" element={<Checkout />} />
+            <EmployeeAuthProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <ScrollToTop />
+                <Suspense fallback={<FullPageLoader />}>
+                  <Routes>
+                    {/* Storefront Routes */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/product/:id" element={<ProductDetails />} />
+                    <Route path="/category/:categoryId" element={<CategoryPage />} />
+                    <Route path="/search" element={<SearchResults />} />
+                    <Route path="/products" element={<AllProducts />} />
+                    <Route path="/about" element={<AboutUs />} />
+                    <Route path="/contact" element={<ContactUs />} />
+                    <Route path="/checkout" element={<Checkout />} />
 
-                  {/* Admin Routes */}
-                  <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/admin" element={<AdminLayout />}>
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="tarifs" element={<AdminTarifs />} />
-                      <Route path="orders" element={<AdminOrders />} />
-                      <Route path="products" element={<AdminProducts />} />
-                      <Route path="categories" element={<AdminCategories />} />
-                      <Route path="messages" element={<AdminMessages />} />
+                    {/* Admin Routes */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route element={<ProtectedRoute type="admin" />}>
+                      <Route path="/admin" element={<AdminLayout />}>
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="tarifs" element={<AdminTarifs />} />
+                        <Route path="orders" element={<AdminOrders />} />
+                        <Route path="products" element={<AdminProducts />} />
+                        <Route path="categories" element={<AdminCategories />} />
+                        <Route path="messages" element={<AdminMessages />} />
+                        <Route path="access" element={<AdminAccess />} />
+                      </Route>
                     </Route>
-                  </Route>
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
+                    {/* Employee Routes */}
+                    <Route path="/employee/login" element={<EmployeeLogin />} />
+                    <Route element={<ProtectedRoute type="employee" />}>
+                      <Route path="/employee" element={<EmployeeLayout />}>
+                        <Route index element={<Navigate to="/employee/orders" replace />} />
+                        <Route path="orders" element={<EmployeeOrders />} />
+                      </Route>
+                    </Route>
+
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </EmployeeAuthProvider>
           </AdminAuthProvider>
         </WishlistProvider>
       </CartProvider>

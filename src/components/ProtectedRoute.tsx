@@ -1,14 +1,20 @@
 import React from 'react';
 import { useAdminAuth } from '@/context/AdminAuthContext';
-import { Navigate, Outlet } from 'react-router-dom';
+import { useEmployeeAuth } from '@/context/EmployeeAuthContext';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
+  type?: 'admin' | 'employee';
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAdminAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, type = 'admin' }) => {
+  const adminAuth = useAdminAuth();
+  const employeeAuth = useEmployeeAuth();
+  const location = useLocation();
+
+  const { isAuthenticated, isLoading } = type === 'admin' ? adminAuth : employeeAuth;
 
   if (isLoading) {
     return (
@@ -19,7 +25,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    const loginPath = type === 'admin' ? '/admin/login' : '/employee/login';
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   return children ? <>{children}</> : <Outlet />;
