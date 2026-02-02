@@ -40,6 +40,9 @@ const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminAccess = lazy(() => import('./pages/admin/AdminAccess'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+
+import { PixelTracker } from "@/components/PixelTracker";
 
 // Lazy-loaded employee pages
 const EmployeeLogin = lazy(() => import('./pages/employee/EmployeeLogin'));
@@ -59,6 +62,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <ScrollToTop />
+                <PixelTracker />
                 <Suspense fallback={<FullPageLoader />}>
                   <Routes>
                     {/* Storefront Routes */}
@@ -82,6 +86,7 @@ const App = () => (
                         <Route path="categories" element={<AdminCategories />} />
                         <Route path="messages" element={<AdminMessages />} />
                         <Route path="access" element={<AdminAccess />} />
+                        <Route path="analytics" element={<AdminAnalytics />} />
                       </Route>
                     </Route>
 

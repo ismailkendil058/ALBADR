@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   MessageSquare,
-  Lock
+  Lock,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -24,6 +25,7 @@ const navItems = [
   { path: '/admin/products', label: 'Products', icon: Package, end: false },
   { path: '/admin/categories', label: 'Categories', icon: FolderTree, end: false },
   { path: '/admin/messages', label: 'Messages', icon: MessageSquare, end: false },
+  { path: '/admin/analytics', label: 'Analytics', icon: Activity, end: false },
   { path: '/admin/access', label: 'Access', icon: Lock, end: false },
 ];
 
