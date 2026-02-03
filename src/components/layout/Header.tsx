@@ -29,9 +29,11 @@ const Header = () => {
       <div className="container py-4">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl md:text-3xl font-arabic-display font-bold text-secondary">
-              طاحونة البدر
-            </span>
+            <img
+              src="/Al Badr Logo HQ Transparent.png"
+              alt="طاحونة البدر"
+              className="h-14 md:h-12 w-auto object-contain transform transition-transform hover:scale-105 duration-300"
+            />
           </Link>
 
           {/* Search Bar - Desktop */}

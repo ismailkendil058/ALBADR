@@ -4,19 +4,23 @@ const Footer = () => {
   return (
     <footer className="bg-secondary text-secondary-foreground">
       <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 text-center">
           {/* About */}
-          <div>
-            <h3 className="text-xl font-arabic-display font-bold mb-4">طاحونة البدر</h3>
-            <p className="text-sm font-body leading-relaxed opacity-90">
+          <div className="flex flex-col items-center">
+            <img
+              src="/Al Badr Logo HQ Transparent.png"
+              alt="طاحونة البدر"
+              className="h-32 md:h-48 w-auto object-contain mb-6"
+            />
+            <p className="text-sm font-body leading-relaxed opacity-90 max-w-sm">
               طاحونة البدر هي وجهتكم الأولى للتوابل والأعشاب الطبيعية. نقدم لكم منتجات أصيلة بجودة عالية من الجزائر، مع التزامنا بالمحافظة على الطرق التقليدية في التحضير.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-arabic font-bold mb-4">روابط سريعة</h3>
-            <ul className="space-y-2 font-body text-sm">
+            <h3 className="text-lg font-arabic font-bold mb-6">روابط سريعة</h3>
+            <ul className="space-y-3 font-body text-sm">
               <li>
                 <a href="/" className="hover:text-primary transition-colors">الرئيسية</a>
               </li>
@@ -37,36 +41,36 @@ const Footer = () => {
 
 
           {/* Contact */}
-          <div>
-            <h3 className="text-lg font-arabic font-bold mb-4">اتصل بنا</h3>
-            <ul className="space-y-3 font-body text-sm">
-              <li className="flex items-center gap-3">
+          <div className="flex flex-col items-center">
+            <h3 className="text-lg font-arabic font-bold mb-6">اتصل بنا</h3>
+            <ul className="space-y-4 font-body text-sm flex flex-col items-center">
+              <li className="flex items-center gap-3 justify-center" dir="ltr">
                 <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
                 <a href="https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc" target="_blank" rel="noopener noreferrer">
-                  Laghouat,Algeria
+                  Laghouat, Algeria
                 </a>
               </li>
-              <li className="flex items-center gap-3" dir="ltr">
+              <li className="flex items-center gap-3 justify-center" dir="ltr">
                 <Phone className="w-5 h-5 text-primary flex-shrink-0" />
                 <a href="tel:+213660408520" className="hover:text-primary transition-colors">0660 40 85 20</a>
               </li>
-              <li className="flex items-center gap-3" dir="ltr">
+              <li className="flex items-center gap-3 justify-center" dir="ltr">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />
                 <span>moulinalbadr@gmail.com</span>
               </li>
             </ul>
-            
+
             {/* Social */}
-            <div className="flex items-center gap-4 mt-6">
-              <a 
-                href="https://www.facebook.com/share/1WDFD5GEc9/?mibextid=wwXIfr" 
+            <div className="flex items-center gap-4 mt-8 justify-center">
+              <a
+                href="https://www.facebook.com/share/1WDFD5GEc9/?mibextid=wwXIfr"
                 className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
               </a>
-              <a 
-                href="https://www.instagram.com/moulin_albadr?igsh=bnRweGF5a2pqZmN4" 
+              <a
+                href="https://www.instagram.com/moulin_albadr?igsh=bnRweGF5a2pqZmN4"
                 className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
                 aria-label="Instagram"
               >
