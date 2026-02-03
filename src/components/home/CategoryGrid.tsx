@@ -42,12 +42,12 @@ const CategoryGrid = () => {
           <p className="section-subtitle font-french">Découvrez nos catégories</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="flex flex-nowrap md:flex-wrap justify-start md:justify-center gap-4 md:gap-6 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide snap-x snap-mandatory px-4 md:px-0 -mx-4 md:mx-0">
           {categories.map((category) => (
             <Link
               key={category.id}
               to={`/category/${category.id}`}
-              className={`category-card group aspect-square ${category.is_special ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+              className={`category-card group aspect-square flex-shrink-0 w-[160px] md:w-[calc(33.333%-16px)] lg:w-[calc(20%-20px)] md:flex-shrink md:min-w-[180px] max-w-[240px] snap-center ${category.is_special ? 'ring-2 ring-primary ring-offset-2' : ''}`}
             >
               <img src={category.image || '/placeholder.svg'} alt={category.name_ar} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" decoding="async" />
 
@@ -55,8 +55,6 @@ const CategoryGrid = () => {
                 {category.is_special && <span className="badge-promo mb-2 text-xs">عرض خاص</span>}
                 <h3 className="text-xl md:text-2xl font-arabic-display font-bold text-primary-foreground">{category.name_ar}</h3>
                 <p className="text-sm font-french text-primary-foreground/80 mt-1">{category.name_fr}</p>
-                {/* productCount is not directly available from Supabase categories table */}
-                {/* <span className="text-sm font-body text-primary-foreground/70 mt-2">{category.productCount} منتج</span> */}
               </div>
             </Link>
           ))}
