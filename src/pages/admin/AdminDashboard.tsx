@@ -30,12 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  exportAnalyticsToExcel,
-  formatAnalyticsSummary,
-  formatAnalyticsTrends,
-  formatStatusBreakdown,
-  formatDeliveryBreakdown,
-  formatStoreBreakdown
+  exportAnalyticsToExcel
 } from '@/lib/exportUtils';
 import { useOrdersByDateRange } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
@@ -328,24 +323,12 @@ const AdminDashboard: React.FC = () => {
 
     const fileName = `Dashboard_Analytics_${dateStr}`;
 
-    // We export a multi-sheet workbook with all requested breakdowns
-    const summaryData = formatAnalyticsSummary(stats);
-    const trendData = formatAnalyticsTrends(timeChartData);
-    const statusData = formatStatusBreakdown(stats.orderStatusBreakdown);
-    const deliveryData = formatDeliveryBreakdown(stats.ordersByDelivery);
-    const storeData = formatStoreBreakdown(stats.ordersByStore);
-
-    exportAnalyticsToExcel([
-      { name: 'Summary Metrics', data: summaryData },
-      { name: 'Trend Data', data: trendData },
-      { name: 'Status Distribution', data: statusData },
-      { name: 'Delivery Distribution', data: deliveryData },
-      { name: 'Store Distribution', data: storeData }
-    ], fileName);
+    // Export using the new professional format
+    exportAnalyticsToExcel(stats, timeChartData, { from, to }, fileName);
 
     toast({
-      title: "Export Started",
-      description: `Your analytics Excel file is being generated.`,
+      title: "Export Complete",
+      description: `Analytics report exported successfully as ${fileName}.xlsx`,
     });
   };
 
