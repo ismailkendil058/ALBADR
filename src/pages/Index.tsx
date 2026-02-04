@@ -8,6 +8,8 @@ import FeaturesBar from '@/components/home/FeaturesBar';
 import { useFeaturedProducts, useBestSellerProducts, usePromoProducts } from '@/hooks/useProducts';
 import { Loader2 } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
+import SEO from '@/components/seo/SEO';
+import JSONLD from '@/components/seo/JSONLD';
 
 const Index = () => {
   const { data: featuredProducts, isLoading: isLoadingFeatured, error: errorFeatured } = useFeaturedProducts();
@@ -37,9 +39,26 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        description="طاحونة البدر - أفضل التوابل والأعشاب الطبيعية بجودة عالية من الجزائر. اكتشف عالمًا من النكهات الأصيلة."
+        canonical="/"
+      />
+      <JSONLD
+        data={{
+          '@type': 'LocalBusiness',
+          'name': 'طاحونة البدر',
+          'image': '/Al Badr Logo HQ Transparent.png',
+          'address': {
+            '@type': 'PostalAddress',
+            'addressLocality': 'Laghouat',
+            'addressCountry': 'DZ'
+          },
+          'priceRange': '$$'
+        }}
+      />
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         <HeroSlider />
         <FeaturesBar />

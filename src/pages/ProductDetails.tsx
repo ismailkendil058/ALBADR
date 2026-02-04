@@ -8,6 +8,8 @@ import ProductCard from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useProduct, useProducts } from '@/hooks/useProducts';
+import SEO from '@/components/seo/SEO';
+import JSONLD from '@/components/seo/JSONLD';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -73,22 +75,46 @@ const ProductDetails = () => {
       isBestSeller: product.is_best_seller || false,
       isFeatured: product.is_featured || false,
     };
-    
+
     const weightOption = selectedWeight ? {
       id: selectedWeight.id,
       weight: selectedWeight.weight,
       price: selectedWeight.price,
     } : undefined;
-    
+
     addItem(cartProduct, quantity, weightOption);
     setQuantity(1);
   };
 
   return (
     <div className="min-h-screen flex flex-col">
+      <SEO
+        title={product.name_ar}
+        description={product.description_ar?.substring(0, 160)}
+        ogImage={product.image}
+        ogType="product"
+      />
+      <JSONLD
+        data={{
+          '@type': 'Product',
+          'name': product.name_ar,
+          'image': product.image,
+          'description': product.description_ar,
+          'brand': {
+            '@type': 'Brand',
+            'name': 'طاحونة البدر'
+          },
+          'offers': {
+            '@type': 'Offer',
+            'price': displayPrice,
+            'priceCurrency': 'DZD',
+            'availability': 'https://schema.org/InStock'
+          }
+        }}
+      />
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="bg-muted/50 py-3">
@@ -104,7 +130,7 @@ const ProductDetails = () => {
                   <ChevronLeft className="w-4 h-4" />
                 </>
               )}
-                                <span className="text-foreground">{product.name_ar || ''}</span>            </nav>
+              <span className="text-foreground">{product.name_ar || ''}</span>            </nav>
           </div>
         </div>
 
@@ -171,11 +197,10 @@ const ProductDetails = () => {
                         <button
                           key={weight.id}
                           onClick={() => setSelectedWeightId(weight.id)}
-                          className={`px-4 py-2 rounded-lg border-2 transition-all ${
-                            selectedWeightId === weight.id
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border hover:border-primary/50'
-                          }`}
+                          className={`px-4 py-2 rounded-lg border-2 transition-all ${selectedWeightId === weight.id
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border hover:border-primary/50'
+                            }`}
                         >
                           <span className="font-medium">{weight.weight}</span>
                           <span className="text-sm text-muted-foreground mr-2">- {weight.price} د.ج</span>
@@ -221,8 +246,8 @@ const ProductDetails = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="w-full font-body text-lg"
                     onClick={handleAddToCart}
                     disabled={hasWeightOptions && !selectedWeightId}

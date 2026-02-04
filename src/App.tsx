@@ -12,6 +12,7 @@ import { CMSProvider } from "@/context/CMSContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Loader2 } from 'lucide-react';
+import { HelmetProvider } from 'react-helmet-async';
 
 // Page-level loader
 const FullPageLoader = () => (
@@ -54,66 +55,68 @@ const EmployeeOrders = lazy(() => import('./pages/employee/EmployeeOrders'));
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <CMSProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <AdminAuthProvider>
-              <EmployeeAuthProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                  <ScrollToTop />
-                  <PixelTracker />
-                  <Suspense fallback={<FullPageLoader />}>
-                    <Routes>
-                      {/* Storefront Routes */}
-                      <Route path="/" element={<Index />} />
-                      <Route path="/product/:id" element={<ProductDetails />} />
-                      <Route path="/category/:categoryId" element={<CategoryPage />} />
-                      <Route path="/search" element={<SearchResults />} />
-                      <Route path="/products" element={<AllProducts />} />
-                      <Route path="/about" element={<AboutUs />} />
-                      <Route path="/contact" element={<ContactUs />} />
-                      <Route path="/checkout" element={<Checkout />} />
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <CMSProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <AdminAuthProvider>
+                <EmployeeAuthProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <ScrollToTop />
+                    <PixelTracker />
+                    <Suspense fallback={<FullPageLoader />}>
+                      <Routes>
+                        {/* Storefront Routes */}
+                        <Route path="/" element={<Index />} />
+                        <Route path="/product/:id" element={<ProductDetails />} />
+                        <Route path="/category/:categoryId" element={<CategoryPage />} />
+                        <Route path="/search" element={<SearchResults />} />
+                        <Route path="/products" element={<AllProducts />} />
+                        <Route path="/about" element={<AboutUs />} />
+                        <Route path="/contact" element={<ContactUs />} />
+                        <Route path="/checkout" element={<Checkout />} />
 
-                      {/* Admin Routes */}
-                      <Route path="/admin/login" element={<AdminLogin />} />
-                      <Route element={<ProtectedRoute type="admin" />}>
-                        <Route path="/admin" element={<AdminLayout />}>
-                          <Route index element={<AdminDashboard />} />
-                          <Route path="tarifs" element={<AdminTarifs />} />
-                          <Route path="orders" element={<AdminOrders />} />
-                          <Route path="products" element={<AdminProducts />} />
-                          <Route path="categories" element={<AdminCategories />} />
-                          <Route path="cms" element={<AdminCMS />} />
-                          <Route path="messages" element={<AdminMessages />} />
-                          <Route path="access" element={<AdminAccess />} />
-                          <Route path="analytics" element={<AdminAnalytics />} />
+                        {/* Admin Routes */}
+                        <Route path="/admin/login" element={<AdminLogin />} />
+                        <Route element={<ProtectedRoute type="admin" />}>
+                          <Route path="/admin" element={<AdminLayout />}>
+                            <Route index element={<AdminDashboard />} />
+                            <Route path="tarifs" element={<AdminTarifs />} />
+                            <Route path="orders" element={<AdminOrders />} />
+                            <Route path="products" element={<AdminProducts />} />
+                            <Route path="categories" element={<AdminCategories />} />
+                            <Route path="cms" element={<AdminCMS />} />
+                            <Route path="messages" element={<AdminMessages />} />
+                            <Route path="access" element={<AdminAccess />} />
+                            <Route path="analytics" element={<AdminAnalytics />} />
+                          </Route>
                         </Route>
-                      </Route>
 
-                      {/* Employee Routes */}
-                      <Route path="/employee/login" element={<EmployeeLogin />} />
-                      <Route element={<ProtectedRoute type="employee" />}>
-                        <Route path="/employee" element={<EmployeeLayout />}>
-                          <Route index element={<Navigate to="/employee/orders" replace />} />
-                          <Route path="orders" element={<EmployeeOrders />} />
+                        {/* Employee Routes */}
+                        <Route path="/employee/login" element={<EmployeeLogin />} />
+                        <Route element={<ProtectedRoute type="employee" />}>
+                          <Route path="/employee" element={<EmployeeLayout />}>
+                            <Route index element={<Navigate to="/employee/orders" replace />} />
+                            <Route path="orders" element={<EmployeeOrders />} />
+                          </Route>
                         </Route>
-                      </Route>
 
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </EmployeeAuthProvider>
-            </AdminAuthProvider>
-          </WishlistProvider>
-        </CartProvider>
-      </CMSProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </BrowserRouter>
+                </EmployeeAuthProvider>
+              </AdminAuthProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </CMSProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
