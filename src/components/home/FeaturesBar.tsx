@@ -10,7 +10,7 @@ const features = [
   {
     icon: Shield,
     titleAr: 'الدفع عند الاستلام',
-    titleFr: 'paiement a la livraison',
+    titleFr: 'Paiement à la livraison',
     descriptionAr: 'معاملات مشفرة',
   },
   {

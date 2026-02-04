@@ -239,7 +239,7 @@ const Checkout = () => {
         status: 'new' as OrderStatus, // Default status
         send_from_store: sendFromStoreId,
         notes: formData.deliveryMethod === 'pickup' && formData.pickupDate
-          ? `Pickup on: ${format(formData.pickupDate, 'yyyy-MM-dd')}`
+          ? `تاريخ الاستلام: ${format(formData.pickupDate, 'yyyy-MM-dd')}`
           : null,
       };
 

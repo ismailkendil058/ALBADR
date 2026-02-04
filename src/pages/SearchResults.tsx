@@ -26,7 +26,7 @@ const SearchResults = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <CardContent>
-          <p className="text-destructive font-body">Error loading products: {error.message}</p>
+          <p className="text-destructive font-body">حدث خطأ أثناء تحميل المنتجات: {error.message}</p>
         </CardContent>
       </div>
     );
@@ -45,7 +45,7 @@ const SearchResults = () => {
     <div className="min-h-screen flex flex-col">
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="bg-muted/50 py-3">
@@ -71,7 +71,7 @@ const SearchResults = () => {
             {searchResults.length > 0 ? (
               <>
                 <p className="text-muted-foreground font-body mb-6">
-                  تم العثور على {searchResults.length} منتج
+                  تم العثور على {searchResults.length} {searchResults.length === 1 ? 'منتج' : 'منتجات'}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {searchResults.map((product) => (

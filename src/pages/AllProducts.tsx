@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
 import { useProducts, useFeaturedProducts, useBestSellerProducts, usePromoProducts } from '@/hooks/useProducts';
-import { 
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -21,7 +21,8 @@ const AllProducts = () => {
   const initialPage = parseInt(searchParams.get('page') || '1', 10);
   const [page, setPage] = useState(initialPage);
 
-  let pageTitle = 'All Products';
+  let pageTitle = 'جميع المنتجات';
+  let pageTitleAr = 'جميع المنتجات';
   let pageTitleFr = 'Tous les Produits';
   const PAGE_SIZE = 16;
 
@@ -38,28 +39,32 @@ const AllProducts = () => {
   if (section === 'featured') {
     displayProducts = featuredProducts || [];
     totalCount = displayProducts.length;
-    pageTitle = 'Featured Products';
+    pageTitle = 'منتجات مميزة';
+    pageTitleAr = 'منتجات مميزة';
     pageTitleFr = 'Produits en Vedette';
     isLoading = isLoadingFeatured;
     error = errorFeatured;
   } else if (section === 'bestsellers') {
     displayProducts = bestSellerProducts || [];
     totalCount = displayProducts.length;
-    pageTitle = 'Best Sellers';
+    pageTitle = 'الأكثر مبيعاً';
+    pageTitleAr = 'الأكثر مبيعاً';
     pageTitleFr = 'Meilleures Ventes';
     isLoading = isLoadingBestSellers;
     error = errorBestSellers;
   } else if (section === 'promo') {
     displayProducts = promoProducts || [];
     totalCount = displayProducts.length;
-    pageTitle = 'Special Offers';
+    pageTitle = 'عروض خاصة';
+    pageTitleAr = 'عروض خاصة';
     pageTitleFr = 'Promotions Spéciales';
     isLoading = isLoadingPromo;
     error = errorPromo;
   } else {
     displayProducts = allProductsData?.data || [];
     totalCount = allProductsData?.count || 0;
-    pageTitle = 'All Products';
+    pageTitle = 'جميع المنتجات';
+    pageTitleAr = 'جميع المنتجات';
     pageTitleFr = 'Tous les Produits';
     isLoading = isLoadingAll;
     error = errorAll;
@@ -81,13 +86,13 @@ const AllProducts = () => {
     <div className="min-h-screen flex flex-col">
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="bg-muted/50 py-3">
           <div className="container">
             <nav className="flex items-center gap-2 text-sm font-body text-muted-foreground">
-              <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+              <Link to="/" className="hover:text-primary transition-colors">الرئيسية</Link>
               <ChevronLeft className="w-4 h-4" />
               <span className="text-foreground">{pageTitle}</span>
             </nav>
@@ -104,7 +109,7 @@ const AllProducts = () => {
               <p className="text-muted-foreground font-french mt-1">{pageTitleFr}</p>
               {!isLoading && !error && (
                 <p className="text-sm text-muted-foreground font-body mt-2">
-                  {totalCount} products
+                  {totalCount} منتج
                 </p>
               )}
             </div>
@@ -116,7 +121,7 @@ const AllProducts = () => {
             ) : error ? (
               <div className="text-center py-12">
                 <p className="text-destructive font-body">
-                  Error loading products: {error.message}
+                  حدث خطأ أثناء تحميل المنتجات: {error.message}
                 </p>
               </div>
             ) : displayProducts.length > 0 ? (
@@ -139,15 +144,15 @@ const AllProducts = () => {
                           />
                         </PaginationItem>
                         {[...Array(totalPages)].map((_, i) => (
-                           <PaginationItem key={i}>
-                             <PaginationLink 
-                               href="#"
-                               onClick={(e) => { e.preventDefault(); handlePageChange(i + 1); }}
-                               isActive={page === i + 1}
-                             >
-                               {i + 1}
-                             </PaginationLink>
-                           </PaginationItem>
+                          <PaginationItem key={i}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => { e.preventDefault(); handlePageChange(i + 1); }}
+                              isActive={page === i + 1}
+                            >
+                              {i + 1}
+                            </PaginationLink>
+                          </PaginationItem>
                         ))}
                         <PaginationItem>
                           <PaginationNext
@@ -164,7 +169,7 @@ const AllProducts = () => {
             ) : (
               <div className="text-center py-12">
                 <p className="text-muted-foreground font-body">
-                  No products available
+                  لا توجد منتجات متوفرة حالياً
                 </p>
               </div>
             )}

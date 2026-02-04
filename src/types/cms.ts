@@ -99,7 +99,7 @@ export const defaultCMSContent: CMSContent = {
             { id: '2', platform: 'instagram', url: 'https://www.instagram.com/moulin_albadr?igsh=bnRweGF5a2pqZmN4', order: 2 },
         ],
         copyrightText: '© {year} طاحونة البدر. جميع الحقوق محفوظة.',
-        copyrightSubtext: 'Tous droits réservés - Tahounat Al Badr',
+        copyrightSubtext: 'Tous droits réservés.',
     },
     hero: {
         slides: [],

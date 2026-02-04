@@ -31,7 +31,7 @@ const Index = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <CardContent>
-          <p className="text-destructive font-body">Error loading products: {error.message}</p>
+          <p className="text-destructive font-body">خطأ أثناء تحميل المنتجات: {error.message}</p>
         </CardContent>
       </div>
     );

@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
 import { useCategories } from '@/hooks/useCategories';
 import { useProductsByCategory } from '@/hooks/useProducts';
-import { 
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -26,7 +26,7 @@ const CategoryPage = () => {
 
   const { categories, isLoading: isLoadingCategories, error: errorCategories } = useCategories();
   const { data: productsData, isLoading: isLoadingProducts, error: errorProducts } = useProductsByCategory({ categoryId, page, pageSize: PAGE_SIZE });
-  
+
   const { data: products = [], count = 0 } = productsData || {};
   const category = categories?.find(c => c.id === categoryId);
 
@@ -62,9 +62,9 @@ const CategoryPage = () => {
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-arabic-display mb-4">Error loading data</h1>
+            <h1 className="text-2xl font-arabic-display mb-4">خطأ في تحميل البيانات</h1>
             <p className="text-destructive font-body">{error.message}</p>
-            <Link to="/" className="text-primary hover:underline font-body">Go to Home</Link>
+            <Link to="/" className="text-primary hover:underline font-body">العودة للرئيسية</Link>
           </div>
         </main>
         <Footer />
@@ -79,8 +79,8 @@ const CategoryPage = () => {
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-arabic-display mb-4">Category not found</h1>
-            <Link to="/" className="text-primary hover:underline font-body">Go to Home</Link>
+            <h1 className="text-2xl font-arabic-display mb-4">القسم غير موجود</h1>
+            <Link to="/" className="text-primary hover:underline font-body">العودة للرئيسية</Link>
           </div>
         </main>
         <Footer />
@@ -92,12 +92,12 @@ const CategoryPage = () => {
     <div className="min-h-screen flex flex-col">
       <TopBar />
       <Header />
-      
+
       <main className="flex-1">
         <div className="bg-muted/50 py-3">
           <div className="container">
             <nav className="flex items-center gap-2 text-sm font-body text-muted-foreground">
-              <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+              <Link to="/" className="hover:text-primary transition-colors">الرئيسية</Link>
               <ChevronLeft className="w-4 h-4" />
               <span className="text-foreground">{category.name_ar}</span>
             </nav>
@@ -110,7 +110,7 @@ const CategoryPage = () => {
             <div className="text-center">
               <h1 className="text-3xl md:text-4xl font-arabic-display font-bold text-primary-foreground mb-2">{category.name_ar}</h1>
               <p className="text-lg font-french text-primary-foreground/80">{category.name_fr}</p>
-              <p className="text-sm font-body text-primary-foreground/70 mt-2">{count} products</p>
+              <p className="text-sm font-body text-primary-foreground/70 mt-2">{count} منتج</p>
             </div>
           </div>
         </section>
@@ -118,7 +118,7 @@ const CategoryPage = () => {
         <section className="py-12">
           <div className="container">
             {isLoadingProducts ? (
-               <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : products && products.length > 0 ? (
@@ -136,9 +136,9 @@ const CategoryPage = () => {
                           <PaginationPrevious href="#" onClick={(e) => { e.preventDefault(); handlePageChange(page - 1); }} className={page === 1 ? 'pointer-events-none text-muted-foreground' : ''} />
                         </PaginationItem>
                         {[...Array(totalPages)].map((_, i) => (
-                           <PaginationItem key={i}>
-                             <PaginationLink href="#" onClick={(e) => { e.preventDefault(); handlePageChange(i + 1); }} isActive={page === i + 1}>{i + 1}</PaginationLink>
-                           </PaginationItem>
+                          <PaginationItem key={i}>
+                            <PaginationLink href="#" onClick={(e) => { e.preventDefault(); handlePageChange(i + 1); }} isActive={page === i + 1}>{i + 1}</PaginationLink>
+                          </PaginationItem>
                         ))}
                         <PaginationItem>
                           <PaginationNext href="#" onClick={(e) => { e.preventDefault(); handlePageChange(page + 1); }} className={page === totalPages ? 'pointer-events-none text-muted-foreground' : ''} />
@@ -150,7 +150,7 @@ const CategoryPage = () => {
               </>
             ) : (
               <div className="text-center py-12">
-                <p className="text-muted-foreground font-body">No products in this category yet</p>
+                <p className="text-muted-foreground font-body">لا توجد منتجات في هذا القسم حالياً</p>
               </div>
             )}
           </div>

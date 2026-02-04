@@ -95,7 +95,7 @@ const Header = () => {
               {isCategoryOpen && (
                 <div className="absolute top-full right-0 w-64 bg-card border border-border rounded-b-lg shadow-xl z-50 animate-fade-in">
                   {isLoading ? (
-                    <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
+                    <div className="px-4 py-3 font-body text-foreground">جاري تحميل الأقسام...</div>
                   ) : (
                     categories?.map((category) => (
                       <Link
@@ -129,7 +129,7 @@ const Header = () => {
           <div className="container py-4">
             <div className="space-y-2">
               {isLoading ? (
-                <div className="px-4 py-3 font-body text-foreground">Loading categories...</div>
+                <div className="px-4 py-3 font-body text-foreground">جاري تحميل الأقسام...</div>
               ) : (
                 categories?.map((category) => (
                   <Link key={category.id} to={`/category/${category.id}`} className={`flex items-center justify-between px-4 py-3 font-body hover:bg-muted rounded-lg transition-colors ${category.is_special ? 'border-r-4 border-primary bg-primary/5' : ''}`} onClick={() => setIsMenuOpen(false)}>

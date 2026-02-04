@@ -2,7 +2,7 @@ import { ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/products/ProductCard';
-import { Product } from '@/types';
+import { Product } from '@/hooks/useProducts';
 
 interface ProductSectionProps {
   titleAr: string;
