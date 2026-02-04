@@ -1,6 +1,18 @@
 import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react';
+import { useCMS } from '@/context/CMSContext';
 
 const Footer = () => {
+  const { content } = useCMS();
+  const { logo, aboutText, contactInfo, socialMedia } = content.footer;
+
+  const getSocialIcon = (platform: string) => {
+    switch (platform) {
+      case 'facebook': return <Facebook className="w-5 h-5" />;
+      case 'instagram': return <Instagram className="w-5 h-5" />;
+      default: return null;
+    }
+  };
+
   return (
     <footer className="bg-secondary text-secondary-foreground">
       <div className="container py-12">
@@ -8,12 +20,12 @@ const Footer = () => {
           {/* About */}
           <div className="flex flex-col items-center">
             <img
-              src="/Al Badr Logo HQ Transparent.png"
+              src={logo || "/Al Badr Logo HQ Transparent.png"}
               alt="طاحونة البدر"
               className="h-32 md:h-48 w-auto object-contain mb-6"
             />
             <p className="text-sm font-body leading-relaxed opacity-90 max-w-sm">
-              طاحونة البدر هي وجهتكم الأولى للتوابل والأعشاب الطبيعية. نقدم لكم منتجات أصيلة بجودة عالية من الجزائر، مع التزامنا بالمحافظة على الطرق التقليدية في التحضير.
+              {aboutText || "طاحونة البدر هي وجهتكم الأولى للتوابل والأعشاب الطبيعية. نقدم لكم منتجات أصيلة بجودة عالية من الجزائر، مع التزامنا بالمحافظة على الطرق التقليدية في التحضير."}
             </p>
           </div>
 
@@ -25,20 +37,16 @@ const Footer = () => {
                 <a href="/" className="hover:text-primary transition-colors">الرئيسية</a>
               </li>
               <li>
-                <a href="#spices" className="hover:text-primary transition-colors">التوابل</a>
+                <a href="/products" className="hover:text-primary transition-colors">منتجاتنا</a>
               </li>
               <li>
-                <a href="#herbs" className="hover:text-primary transition-colors">الأعشاب</a>
+                <a href="/about" className="hover:text-primary transition-colors">من نحن</a>
               </li>
               <li>
-                <a href="#about" className="hover:text-primary transition-colors">من نحن</a>
-              </li>
-              <li>
-                <a href="#contact" className="hover:text-primary transition-colors">اتصل بنا</a>
+                <a href="/contact" className="hover:text-primary transition-colors">اتصل بنا</a>
               </li>
             </ul>
           </div>
-
 
           {/* Contact */}
           <div className="flex flex-col items-center">
@@ -46,37 +54,39 @@ const Footer = () => {
             <ul className="space-y-4 font-body text-sm flex flex-col items-center">
               <li className="flex items-center gap-3 justify-center" dir="ltr">
                 <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
-                <a href="https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc" target="_blank" rel="noopener noreferrer">
-                  Laghouat, Algeria
+                <a href={contactInfo.addressLink || "#"} target="_blank" rel="noopener noreferrer">
+                  {contactInfo.address || "Laghouat, Algeria"}
                 </a>
               </li>
               <li className="flex items-center gap-3 justify-center" dir="ltr">
                 <Phone className="w-5 h-5 text-primary flex-shrink-0" />
-                <a href="tel:+213660408520" className="hover:text-primary transition-colors">0660 40 85 20</a>
+                <a href={`tel:${contactInfo.phone}`} className="hover:text-primary transition-colors">
+                  {contactInfo.phone || "0660 40 85 20"}
+                </a>
               </li>
               <li className="flex items-center gap-3 justify-center" dir="ltr">
                 <Mail className="w-5 h-5 text-primary flex-shrink-0" />
-                <span>moulinalbadr@gmail.com</span>
+                <span>{contactInfo.email || "moulinalbadr@gmail.com"}</span>
               </li>
             </ul>
 
             {/* Social */}
-            <div className="flex items-center gap-4 mt-8 justify-center">
-              <a
-                href="https://www.facebook.com/share/1WDFD5GEc9/?mibextid=wwXIfr"
-                className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="https://www.instagram.com/moulin_albadr?igsh=bnRweGF5a2pqZmN4"
-                className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-            </div>
+            {socialMedia.length > 0 && (
+              <div className="flex items-center gap-4 mt-8 justify-center">
+                {socialMedia.map((social) => (
+                  <a
+                    key={social.id}
+                    href={social.url}
+                    className="w-10 h-10 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-primary transition-colors"
+                    aria-label={social.platform}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {getSocialIcon(social.platform)}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

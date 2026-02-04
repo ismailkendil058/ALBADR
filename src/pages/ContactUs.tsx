@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-
 import { useContactMessages } from '@/hooks/useContactMessages';
+import { useCMS } from '@/context/CMSContext';
 
 const ContactUs = () => {
+  const { content } = useCMS();
+  const { contactInfo } = content.footer;
   const { toast } = useToast();
   const { sendMessage } = useContactMessages();
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -102,7 +105,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-arabic font-semibold mb-1">الهاتف</h3>
-                      <p className="text-muted-foreground font-body" dir="ltr">0660 40 85 20</p>
+                      <p className="text-muted-foreground font-body" dir="ltr">{contactInfo.phone || "0660 40 85 20"}</p>
                     </div>
                   </div>
 
@@ -112,7 +115,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h3 className="font-arabic font-semibold mb-1">البريد الإلكتروني</h3>
-                      <p className="text-muted-foreground font-body">moulinalbadr@gmail.com</p>
+                      <p className="text-muted-foreground font-body">{contactInfo.email || "moulinalbadr@gmail.com"}</p>
                     </div>
                   </div>
 
@@ -123,12 +126,12 @@ const ContactUs = () => {
                     <div>
                       <h3 className="font-arabic font-semibold mb-1">العنوان</h3>
                       <a
-                        href="https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc"
+                        href={contactInfo.addressLink || "https://maps.app.goo.gl/N45Q79s4Xfm2tFm69?g_st=ipc"}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-muted-foreground font-body hover:text-primary transition-colors"
                       >
-                        Laghouat,Algeria
+                        {contactInfo.address || "Laghouat, Algeria"}
                       </a>
                     </div>
                   </div>

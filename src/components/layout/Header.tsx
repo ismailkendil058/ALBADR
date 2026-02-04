@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useCategories } from '@/hooks/useCategories';
+import { useCMS } from '@/context/CMSContext';
 import CartSlideOver from '@/components/cart/CartSlideOver';
 
 const Header = () => {
   const navigate = useNavigate();
+  const { content } = useCMS();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,14 +25,13 @@ const Header = () => {
       setIsMenuOpen(false);
     }
   };
-
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50 shadow-header">
       <div className="container py-4">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
             <img
-              src="/Al Badr Logo HQ Transparent.png"
+              src={content.header.logo || "/Al Badr Logo HQ Transparent.png"}
               alt="طاحونة البدر"
               className="h-14 md:h-12 w-auto object-contain transform transition-transform hover:scale-105 duration-300"
             />
