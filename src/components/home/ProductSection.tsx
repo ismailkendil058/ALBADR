@@ -33,9 +33,12 @@ const ProductSection = ({ titleAr, titleFr, products, showViewAll = true, bgClas
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map((product) => {
-            console.log("Product data in ProductSection:", product);
-            return <ProductCard key={product.id} product={product} />;
+          {products.map((product, index) => {
+            // First 4 products (mobile) / 8 products (tablet/desktop) are above the fold
+            const itemsPerRow = typeof window !== 'undefined' ? (window.innerWidth < 768 ? 2 : window.innerWidth < 1024 ? 3 : 4) : 4;
+            const isAboveTheFold = index < itemsPerRow;
+            
+            return <ProductCard key={product.id} product={product} isAboveTheFold={isAboveTheFold} />;
           })}
         </div>
 

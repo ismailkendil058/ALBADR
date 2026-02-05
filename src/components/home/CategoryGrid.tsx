@@ -43,13 +43,19 @@ const CategoryGrid = () => {
         </div>
 
         <div className="flex flex-nowrap md:flex-wrap justify-start md:justify-center gap-4 md:gap-6 overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 scrollbar-hide snap-x snap-mandatory px-4 md:px-0 -mx-4 md:mx-0">
-          {categories.map((category) => (
+          {categories.map((category, index) => (
             <Link
               key={category.id}
               to={`/category/${category.id}`}
               className={`category-card group aspect-square flex-shrink-0 w-[160px] md:w-[calc(33.333%-16px)] lg:w-[calc(20%-20px)] md:flex-shrink md:min-w-[180px] max-w-[240px] snap-center ${category.is_special ? 'ring-2 ring-primary ring-offset-2' : ''}`}
             >
-              <img src={category.image || '/placeholder.svg'} alt={category.name_ar} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" decoding="async" />
+              <img 
+                src={category.image || '/placeholder.svg'} 
+                alt={category.name_ar} 
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                loading={index < 5 ? "eager" : "lazy"}
+                decoding="async"
+              />
 
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center p-4">
                 {category.is_special && <span className="badge-promo mb-2 text-xs">عرض خاص</span>}

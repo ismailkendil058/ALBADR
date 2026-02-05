@@ -2,25 +2,28 @@ import React from 'react';
 import { Eye } from 'lucide-react';
 import { Product } from '@/hooks/useProducts';
 import { Link } from 'react-router-dom';
+import { getOptimizedImageUrl, generatePlaceholderColor } from '@/lib/imageOptimization';
 
 interface ProductCardProps {
   product: Product;
+  isAboveTheFold?: boolean;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, isAboveTheFold = false }: ProductCardProps) => {
+  const imageUrl = getOptimizedImageUrl(product.image, 300, 75);
+  const placeholderColor = generatePlaceholderColor(product.image || 'default');
+
   return (
     <div className="product-card group">
       {/* Image Container */}
-      <div className="block relative aspect-square overflow-hidden">
+      <div className="block relative aspect-square overflow-hidden" style={{ backgroundColor: placeholderColor }}>
         <img
-          loading="lazy"
+          loading={isAboveTheFold ? "eager" : "lazy"}
           decoding="async"
-          src={product.image || '/placeholder.svg'}
+          src={imageUrl}
           alt={product.name_ar}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-
-
 
         {/* Quick Actions Overlay */}
         <Link to={`/product/${product.id}`} className="quick-view-overlay gap-3">

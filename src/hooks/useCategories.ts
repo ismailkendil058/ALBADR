@@ -26,6 +26,8 @@ export function useCategories() {
   const { data: categories, isLoading, error } = useQuery<Category[], Error>({
     queryKey: ['categories'],
     queryFn: getCategories,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 20 * 60 * 1000, // 20 minutes
   });
 
   const addCategoryMutation = useMutation<Category, Error, CategoryInsert>({
