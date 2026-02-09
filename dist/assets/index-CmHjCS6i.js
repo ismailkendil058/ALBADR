@@ -1,0 +1,1 @@
+import{c as e}from"./index-BWpasF73.js";import{a as r}from"./react-vendor-1XlI0agO.js";const u=e("ChevronUp",[["path",{d:"m18 15-6-6-6 6",key:"153udz"}]]);function o(e){const u=r.useRef({value:e,previous:e});return r.useMemo(()=>(u.current.value!==e&&(u.current.previous=u.current.value,u.current.value=e),u.current.previous),[e])}export{u as C,o as u};
