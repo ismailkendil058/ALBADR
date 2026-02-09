@@ -19,13 +19,13 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { path: '/manager', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { path: '/manager/tarifs', label: 'Tariffs', icon: Receipt, end: false },
-  { path: '/manager/orders', label: 'Orders', icon: ShoppingCart, end: false },
-  { path: '/manager/products', label: 'Products', icon: Package, end: false },
-  { path: '/manager/categories', label: 'Categories', icon: FolderTree, end: false },
-  { path: '/manager/messages', label: 'Messages', icon: MessageSquare, end: false },
-  { path: '/manager/analytics', label: 'Analytics', icon: Activity, end: false },
+  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { path: '/admin/tarifs', label: 'Tariffs', icon: Receipt, end: false },
+  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, end: false },
+  { path: '/admin/products', label: 'Products', icon: Package, end: false },
+  { path: '/admin/categories', label: 'Categories', icon: FolderTree, end: false },
+  { path: '/admin/messages', label: 'Messages', icon: MessageSquare, end: false },
+  { path: '/admin/analytics', label: 'Analytics', icon: Activity, end: false },
 ];
 
 const ManagerLayout: React.FC = () => {
@@ -37,7 +37,7 @@ const ManagerLayout: React.FC = () => {
     localStorage.removeItem('manager_id');
     localStorage.removeItem('manager_name');
     localStorage.removeItem('manager_phone');
-    navigate('/manager/login');
+    navigate('/admin/login');
   };
 
   return (

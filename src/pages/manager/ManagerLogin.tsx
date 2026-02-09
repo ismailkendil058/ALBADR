@@ -55,7 +55,7 @@ const ManagerLogin: React.FC = () => {
       localStorage.setItem('manager_phone', manager.phone);
       localStorage.setItem('manager_authenticated', 'true');
       
-      navigate('/manager');
+      navigate('/admin');
     } catch (err: any) {
       setError(err.message || 'An error occurred during sign in');
     } finally {

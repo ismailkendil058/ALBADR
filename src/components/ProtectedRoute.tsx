@@ -6,19 +6,19 @@ import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
-  type?: 'admin' | 'employee' | 'manager';
+  type?: 'superadmin' | 'admin' | 'employee';
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, type = 'admin' }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, type = 'superadmin' }) => {
   const adminAuth = useAdminAuth();
   const employeeAuth = useEmployeeAuth();
   const location = useLocation();
 
-  // For manager, check if manager is logged in (stored in localStorage)
-  const isManagerLoggedIn = type === 'manager' && localStorage.getItem('manager_id');
-  const isManagerLoading = false;
+  // For admin, check if admin is logged in (stored in localStorage - formerly manager)
+  const isAdminLoggedIn = type === 'admin' && localStorage.getItem('manager_id');
+  const isAdminLoading = false;
   
-  const { isAuthenticated, isLoading } = type === 'manager' ? { isAuthenticated: !!isManagerLoggedIn, isLoading: isManagerLoading } : (type === 'admin' ? adminAuth : employeeAuth);
+  const { isAuthenticated, isLoading } = type === 'admin' ? { isAuthenticated: !!isAdminLoggedIn, isLoading: isAdminLoading } : (type === 'superadmin' ? adminAuth : employeeAuth);
 
   if (isLoading) {
     return (
@@ -29,7 +29,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, type = 'admin
   }
 
   if (!isAuthenticated) {
-    const loginPath = type === 'admin' ? '/admin/login' : type === 'manager' ? '/manager/login' : '/employee/login';
+    const loginPath = type === 'superadmin' ? '/superadmin/login' : type === 'admin' ? '/admin/login' : '/employee/login';
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 

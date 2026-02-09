@@ -32,10 +32,23 @@ const ContactUs = lazy(() => import('./pages/ContactUs'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Lazy-loaded admin pages
-const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
-const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+// Lazy-loaded superadmin pages (from admin directory)
+const SuperAdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
+const SuperAdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const SuperAdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const SuperAdminTarifs = lazy(() => import('./pages/admin/AdminTarifs'));
+const SuperAdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
+const SuperAdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const SuperAdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const SuperAdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
+const SuperAdminAccess = lazy(() => import('./pages/admin/AdminAccess'));
+const SuperAdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const SuperAdminCMS = lazy(() => import('./pages/admin/AdminCMS'));
+
+// Lazy-loaded admin pages (formerly manager)
+const AdminLogin = lazy(() => import('./pages/manager/ManagerLogin'));
+const AdminLayout = lazy(() => import('./pages/manager/ManagerLayout'));
+const AdminDashboard = lazy(() => import('./pages/manager/ManagerDashboard'));
 const AdminTarifs = lazy(() => import('./pages/admin/AdminTarifs'));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
@@ -44,19 +57,6 @@ const AdminMessages = lazy(() => import('./pages/admin/AdminMessages'));
 const AdminAccess = lazy(() => import('./pages/admin/AdminAccess'));
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminCMS = lazy(() => import('./pages/admin/AdminCMS'));
-
-// Lazy-loaded manager pages
-const ManagerLogin = lazy(() => import('./pages/manager/ManagerLogin'));
-const ManagerLayout = lazy(() => import('./pages/manager/ManagerLayout'));
-const ManagerDashboard = lazy(() => import('./pages/manager/ManagerDashboard'));
-const ManagerTarifs = lazy(() => import('./pages/admin/AdminTarifs'));
-const ManagerOrders = lazy(() => import('./pages/admin/AdminOrders'));
-const ManagerProducts = lazy(() => import('./pages/admin/AdminProducts'));
-const ManagerCategories = lazy(() => import('./pages/admin/AdminCategories'));
-const ManagerMessages = lazy(() => import('./pages/admin/AdminMessages'));
-const ManagerAccess = lazy(() => import('./pages/admin/AdminAccess'));
-const ManagerAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
-const ManagerCMS = lazy(() => import('./pages/admin/AdminCMS'));
 
 import { PixelTracker } from "@/components/PixelTracker";
 
@@ -93,7 +93,23 @@ const App = () => (
                         <Route path="/contact" element={<ContactUs />} />
                         <Route path="/checkout" element={<Checkout />} />
 
-                        {/* Admin Routes */}
+                        {/* SuperAdmin Routes */}
+                        <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+                        <Route element={<ProtectedRoute type="superadmin" />}>
+                          <Route path="/superadmin" element={<SuperAdminLayout />}>
+                            <Route index element={<SuperAdminDashboard />} />
+                            <Route path="tarifs" element={<SuperAdminTarifs />} />
+                            <Route path="orders" element={<SuperAdminOrders />} />
+                            <Route path="products" element={<SuperAdminProducts />} />
+                            <Route path="categories" element={<SuperAdminCategories />} />
+                            <Route path="cms" element={<SuperAdminCMS />} />
+                            <Route path="messages" element={<SuperAdminMessages />} />
+                            <Route path="access" element={<SuperAdminAccess />} />
+                            <Route path="analytics" element={<SuperAdminAnalytics />} />
+                          </Route>
+                        </Route>
+
+                        {/* Admin Routes (formerly Manager) */}
                         <Route path="/admin/login" element={<AdminLogin />} />
                         <Route element={<ProtectedRoute type="admin" />}>
                           <Route path="/admin" element={<AdminLayout />}>
@@ -102,24 +118,9 @@ const App = () => (
                             <Route path="orders" element={<AdminOrders />} />
                             <Route path="products" element={<AdminProducts />} />
                             <Route path="categories" element={<AdminCategories />} />
-                            <Route path="cms" element={<AdminCMS />} />
                             <Route path="messages" element={<AdminMessages />} />
                             <Route path="access" element={<AdminAccess />} />
                             <Route path="analytics" element={<AdminAnalytics />} />
-                          </Route>
-                        </Route>
-
-                        {/* Manager Routes */}
-                        <Route path="/manager/login" element={<ManagerLogin />} />
-                        <Route element={<ProtectedRoute type="manager" />}>
-                          <Route path="/manager" element={<ManagerLayout />}>
-                            <Route index element={<ManagerDashboard />} />
-                            <Route path="tarifs" element={<ManagerTarifs />} />
-                            <Route path="orders" element={<ManagerOrders />} />
-                            <Route path="products" element={<ManagerProducts />} />
-                            <Route path="categories" element={<ManagerCategories />} />
-                            <Route path="messages" element={<ManagerMessages />} />
-                            <Route path="analytics" element={<ManagerAnalytics />} />
                           </Route>
                         </Route>
 

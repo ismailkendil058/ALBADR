@@ -28,7 +28,7 @@ const AdminLogin: React.FC = () => {
     if (authError) {
       setError(authError.message);
     } else if (data.session) {
-      navigate('/admin');
+      navigate('/superadmin');
     } else {
       setError('An unexpected error occurred during sign in.');
     }
