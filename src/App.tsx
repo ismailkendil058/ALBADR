@@ -45,6 +45,19 @@ const AdminAccess = lazy(() => import('./pages/admin/AdminAccess'));
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminCMS = lazy(() => import('./pages/admin/AdminCMS'));
 
+// Lazy-loaded manager pages
+const ManagerLogin = lazy(() => import('./pages/manager/ManagerLogin'));
+const ManagerLayout = lazy(() => import('./pages/manager/ManagerLayout'));
+const ManagerDashboard = lazy(() => import('./pages/manager/ManagerDashboard'));
+const ManagerTarifs = lazy(() => import('./pages/admin/AdminTarifs'));
+const ManagerOrders = lazy(() => import('./pages/admin/AdminOrders'));
+const ManagerProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const ManagerCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const ManagerMessages = lazy(() => import('./pages/admin/AdminMessages'));
+const ManagerAccess = lazy(() => import('./pages/admin/AdminAccess'));
+const ManagerAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const ManagerCMS = lazy(() => import('./pages/admin/AdminCMS'));
+
 import { PixelTracker } from "@/components/PixelTracker";
 
 // Lazy-loaded employee pages
@@ -93,6 +106,20 @@ const App = () => (
                             <Route path="messages" element={<AdminMessages />} />
                             <Route path="access" element={<AdminAccess />} />
                             <Route path="analytics" element={<AdminAnalytics />} />
+                          </Route>
+                        </Route>
+
+                        {/* Manager Routes */}
+                        <Route path="/manager/login" element={<ManagerLogin />} />
+                        <Route element={<ProtectedRoute type="manager" />}>
+                          <Route path="/manager" element={<ManagerLayout />}>
+                            <Route index element={<ManagerDashboard />} />
+                            <Route path="tarifs" element={<ManagerTarifs />} />
+                            <Route path="orders" element={<ManagerOrders />} />
+                            <Route path="products" element={<ManagerProducts />} />
+                            <Route path="categories" element={<ManagerCategories />} />
+                            <Route path="messages" element={<ManagerMessages />} />
+                            <Route path="analytics" element={<ManagerAnalytics />} />
                           </Route>
                         </Route>
 

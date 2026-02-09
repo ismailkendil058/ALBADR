@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useEmployees, Employee } from '@/hooks/useEmployees';
+import { useManagers, Manager } from '@/hooks/useManagers';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Dialog,
     DialogContent,
@@ -34,13 +36,19 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+type AccessType = 'employee' | 'manager';
+type UserType = Employee | Manager;
+
 const AdminAccess: React.FC = () => {
-    const { employees, isLoading, createEmployee, updateEmployee, deleteEmployee } = useEmployees();
+    const { employees, isLoading: employeesLoading, createEmployee, updateEmployee, deleteEmployee } = useEmployees();
+    const { managers, isLoading: managersLoading, createManager, updateManager, deleteManager } = useManagers();
     const { toast } = useToast();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+    const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+    const [currentAccessType, setCurrentAccessType] = useState<AccessType>('employee');
+    const [activeTab, setActiveTab] = useState('employee');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -48,18 +56,24 @@ const AdminAccess: React.FC = () => {
         password: '',
     });
 
-    const handleOpenAdd = () => {
-        setSelectedEmployee(null);
+    const isLoading = employeesLoading || managersLoading;
+    const employeesList = employees;
+    const managersList = managers;
+
+    const handleOpenAdd = (type: AccessType) => {
+        setCurrentAccessType(type);
+        setSelectedUser(null);
         setFormData({ name: '', phone: '', password: '' });
         setIsDialogOpen(true);
     };
 
-    const handleOpenEdit = (employee: Employee) => {
-        setSelectedEmployee(employee);
+    const handleOpenEdit = (user: UserType, type: AccessType) => {
+        setCurrentAccessType(type);
+        setSelectedUser(user);
         setFormData({
-            name: employee.name,
-            phone: employee.phone,
-            password: employee.password || ''
+            name: user.name,
+            phone: user.phone,
+            password: user.password || ''
         });
         setIsDialogOpen(true);
     };
@@ -67,122 +81,206 @@ const AdminAccess: React.FC = () => {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (selectedEmployee) {
-                await updateEmployee.mutateAsync({
-                    id: selectedEmployee.id,
-                    name: formData.name,
-                    phone: formData.phone,
-                    password: formData.password
-                });
-                toast({ title: 'Success', description: 'Employee updated successfully.' });
+            if (currentAccessType === 'manager') {
+                if (selectedUser) {
+                    await updateManager.mutateAsync({
+                        id: selectedUser.id,
+                        name: formData.name,
+                        phone: formData.phone,
+                        password: formData.password,
+                        is_active: 'is_active' in selectedUser ? selectedUser.is_active : true
+                    });
+                    toast({ title: 'Success', description: 'Manager updated successfully.' });
+                } else {
+                    await createManager.mutateAsync({
+                        name: formData.name,
+                        phone: formData.phone,
+                        password: formData.password,
+                        is_active: true
+                    });
+                    toast({ title: 'Success', description: 'Manager created successfully.' });
+                }
             } else {
-                await createEmployee.mutateAsync(formData);
-                toast({ title: 'Success', description: 'Employee created successfully.' });
+                if (selectedUser) {
+                    await updateEmployee.mutateAsync({
+                        id: selectedUser.id,
+                        name: formData.name,
+                        phone: formData.phone,
+                        password: formData.password,
+                    });
+                    toast({ title: 'Success', description: 'Employee updated successfully.' });
+                } else {
+                    await createEmployee.mutateAsync({
+                        name: formData.name,
+                        phone: formData.phone,
+                        password: formData.password,
+                    });
+                    toast({ title: 'Success', description: 'Employee created successfully.' });
+                }
             }
             setIsDialogOpen(false);
         } catch (error: any) {
             toast({
                 title: 'Error',
-                description: error.message || 'Failed to save employee.',
+                description: error.message || `Failed to save ${currentAccessType}.`,
                 variant: 'destructive'
             });
         }
     };
 
     const handleDelete = async () => {
-        if (!selectedEmployee) return;
+        if (!selectedUser) return;
         try {
-            await deleteEmployee.mutateAsync(selectedEmployee.id);
-            toast({ title: 'Success', description: 'Employee deleted successfully.' });
+            if (currentAccessType === 'manager') {
+                await deleteManager.mutateAsync(selectedUser.id);
+            } else {
+                await deleteEmployee.mutateAsync(selectedUser.id);
+            }
+            toast({ title: 'Success', description: `${currentAccessType === 'manager' ? 'Manager' : 'Employee'} deleted successfully.` });
             setShowDeleteConfirm(false);
         } catch (error: any) {
             toast({
                 title: 'Error',
-                description: error.message || 'Failed to delete employee.',
+                description: error.message || `Failed to delete ${currentAccessType}.`,
                 variant: 'destructive'
             });
         }
     };
 
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">Access Management</h1>
-                    <p className="text-muted-foreground">Manage employee accounts and dashboard access</p>
-                </div>
-                <Button onClick={handleOpenAdd} className="gap-2">
-                    <Plus className="w-4 h-4" /> Add Employee Account
-                </Button>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {isLoading ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                        <Card key={i} className="animate-pulse">
-                            <CardContent className="p-6 h-32 bg-muted/20" />
-                        </Card>
-                    ))
-                ) : (
-                    employees.map((emp) => (
-                        <Card key={emp.id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-6">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="bg-primary/10 p-3 rounded-full">
-                                        <ShieldCheck className="w-6 h-6 text-primary" />
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleOpenEdit(emp)}
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => {
-                                                setSelectedEmployee(emp);
-                                                setShowDeleteConfirm(true);
-                                            }}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <h3 className="font-bold text-lg mb-1">{emp.name}</h3>
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="w-3.5 h-3.5" /> {emp.phone}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Key className="w-3.5 h-3.5" /> {emp.password ? '••••••••' : 'No password'}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-                )}
-
-                {!isLoading && employees.length === 0 && (
-                    <div className="col-span-full py-20 text-center bg-muted/20 rounded-xl border-2 border-dashed">
-                        <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                        <p className="text-muted-foreground font-medium">No employee accounts created yet</p>
-                        <Button variant="outline" className="mt-4" onClick={handleOpenAdd}>
-                            Create your first account
+    const UserCard = ({ user, type }: { user: UserType; type: AccessType }) => (
+        <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                    <div className={`p-3 rounded-full ${type === 'manager' ? 'bg-purple-100' : 'bg-primary/10'}`}>
+                        <ShieldCheck className={`w-6 h-6 ${type === 'manager' ? 'text-purple-600' : 'text-primary'}`} />
+                    </div>
+                    <div className="flex gap-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenEdit(user, type)}
+                        >
+                            <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                                setCurrentAccessType(type);
+                                setSelectedUser(user);
+                                setShowDeleteConfirm(true);
+                            }}
+                        >
+                            <Trash2 className="w-4 h-4" />
                         </Button>
                     </div>
-                )}
+                </div>
+
+                <h3 className="font-bold text-lg mb-1">{user.name}</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5" /> {user.phone}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Key className="w-3.5 h-3.5" /> {user.password ? '••••••••' : 'No password'}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-2xl font-bold">Access Management</h1>
+                <p className="text-muted-foreground">Manage employee and manager accounts and dashboard access</p>
             </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="employee">Employees</TabsTrigger>
+                    <TabsTrigger value="manager">Managers</TabsTrigger>
+                </TabsList>
+
+                {/* Employees Tab */}
+                <TabsContent value="employee" className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold">Employee Accounts</h2>
+                            <p className="text-sm text-muted-foreground">Manage warehouse and delivery staff</p>
+                        </div>
+                        <Button onClick={() => handleOpenAdd('employee')} className="gap-2">
+                            <Plus className="w-4 h-4" /> Add Employee
+                        </Button>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {isLoading ? (
+                            Array.from({ length: 3 }).map((_, i) => (
+                                <Card key={i} className="animate-pulse">
+                                    <CardContent className="p-6 h-32 bg-muted/20" />
+                                </Card>
+                            ))
+                        ) : employeesList.length > 0 ? (
+                            employeesList.map((emp) => (
+                                <UserCard key={emp.id} user={emp} type="employee" />
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center bg-muted/20 rounded-xl border-2 border-dashed">
+                                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-20" />
+                                <p className="text-muted-foreground font-medium">No employee accounts created yet</p>
+                                <Button variant="outline" className="mt-4" onClick={() => handleOpenAdd('employee')}>
+                                    Create your first employee
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+
+                {/* Managers Tab */}
+                <TabsContent value="manager" className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold">Manager Accounts</h2>
+                            <p className="text-sm text-muted-foreground">Manage manager dashboard access</p>
+                        </div>
+                        <Button onClick={() => handleOpenAdd('manager')} className="gap-2">
+                            <Plus className="w-4 h-4" /> Create Manager
+                        </Button>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {isLoading ? (
+                            Array.from({ length: 3 }).map((_, i) => (
+                                <Card key={i} className="animate-pulse">
+                                    <CardContent className="p-6 h-32 bg-muted/20" />
+                                </Card>
+                            ))
+                        ) : managersList.length > 0 ? (
+                            managersList.map((mgr) => (
+                                <UserCard key={mgr.id} user={mgr} type="manager" />
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center bg-muted/20 rounded-xl border-2 border-dashed">
+                                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-20" />
+                                <p className="text-muted-foreground font-medium">No manager accounts created yet</p>
+                                <Button variant="outline" className="mt-4" onClick={() => handleOpenAdd('manager')}>
+                                    Create your first manager
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+            </Tabs>
 
             {/* Add/Edit Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>{selectedEmployee ? 'Edit Account' : 'New Employee Account'}</DialogTitle>
+                        <DialogTitle>
+                            {selectedUser ? `Edit ${currentAccessType === 'manager' ? 'Manager' : 'Employee'}` : `New ${currentAccessType === 'manager' ? 'Manager' : 'Employee'} Account`}
+                        </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSave} className="space-y-4 py-4">
                         <div className="space-y-2">
@@ -193,7 +291,7 @@ const AdminAccess: React.FC = () => {
                                     id="name"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Employee Name"
+                                    placeholder="Name"
                                     className="pl-10"
                                     required
                                 />
@@ -235,11 +333,11 @@ const AdminAccess: React.FC = () => {
                             <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={createEmployee.isPending || updateEmployee.isPending}>
-                                {(createEmployee.isPending || updateEmployee.isPending) && (
+                            <Button type="submit" disabled={createEmployee.isPending || updateEmployee.isPending || createManager.isPending || updateManager.isPending}>
+                                {(createEmployee.isPending || updateEmployee.isPending || createManager.isPending || updateManager.isPending) && (
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 )}
-                                {selectedEmployee ? 'Save Changes' : 'Create Account'}
+                                {selectedUser ? 'Save Changes' : 'Create Account'}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -252,8 +350,8 @@ const AdminAccess: React.FC = () => {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the account for <strong>{selectedEmployee?.name}</strong>.
-                            They will lose access to the employee dashboard immediately.
+                            This will permanently delete the account for <strong>{selectedUser?.name}</strong>.
+                            They will lose access to the {currentAccessType === 'manager' ? 'manager' : 'employee'} dashboard immediately.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
